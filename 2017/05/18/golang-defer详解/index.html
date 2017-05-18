@@ -74,7 +74,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="golang," />
 
 
 
@@ -90,15 +90,31 @@
 
 
 
-<meta name="description" content="rua! rua! rua!">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Slark">
-<meta property="og:url" content="http://slark.info/index.html">
+<meta name="description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
+2. 坑三个例子
+1.
+123456func f() (result i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="golang defer关键字">
+<meta property="og:url" content="http://slark.info/2017/05/18/golang-defer详解/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="rua! rua! rua!">
+<meta property="og:description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
+2. 坑三个例子
+1.
+123456func f() (result i">
+<meta property="og:updated_time" content="2017-05-18T10:25:10.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Slark">
-<meta name="twitter:description" content="rua! rua! rua!">
+<meta name="twitter:title" content="golang defer关键字">
+<meta name="twitter:description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
+2. 坑三个例子
+1.
+123456func f() (result i">
 
 
 
@@ -126,13 +142,13 @@
 
 
 
-  <link rel="canonical" href="http://slark.info/"/>
+  <link rel="canonical" href="http://slark.info/2017/05/18/golang-defer详解/"/>
 
 
 
 
 
-  <title>Slark</title>
+  <title>golang defer关键字 | Slark</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -158,9 +174,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-   page-home 
- ">
+  <div class="container sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -263,9 +277,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -291,9 +305,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/05/18/golang-defer详解/" itemprop="url">golang defer关键字</a></h1>
+          <h1 class="post-title" itemprop="name headline">golang defer关键字</h1>
         
 
         <div class="post-meta">
@@ -362,9 +374,7 @@
       
 
       
-        
-          
-            <h2 id="1-defer关键字"><a href="#1-defer关键字" class="headerlink" title="1. defer关键字"></a>1. defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
+        <h2 id="1-defer关键字"><a href="#1-defer关键字" class="headerlink" title="1. defer关键字"></a>1. defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">f,err := os.Open(filename)</div><div class="line"><span class="keyword">if</span> err !=<span class="literal">nil</span> &#123;</div><div class="line">  <span class="built_in">panic</span>(err)</div><div class="line">&#125;</div><div class="line"><span class="keyword">defer</span> f.<span class="built_in">close</span>()</div></pre></td></tr></table></figure>
 <p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。</p>
 <h2 id="2-坑"><a href="#2-坑" class="headerlink" title="2. 坑"></a>2. 坑</h2><p>三个例子</p>
@@ -387,154 +397,72 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  r = <span class="number">1</span></div><div class="line">  <span class="function"><span class="keyword">func</span><span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">    r = r + <span class="number">5</span></div><div class="line">  &#125;(r)</div><div class="line">  <span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>由于是值传递而不是引用传递，所以匿名函数的r不会改变返回值的r，所以返回1。但是需要指出的是，改写前的函数内部的匿名函数传入的参数r的值为0，而不是1（在思考为什么）。</p>
 
-          
+      
+    </div>
+
+    <div>
+      
         
+
       
     </div>
 
     <div>
       
-    </div>
+        
 
-    <div>
       
     </div>
 
     <div>
+      
+        
+
       
     </div>
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2017/05/15/begin/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Edwin">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/slark.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Slark">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/05/15/begin/" itemprop="url">begin</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-15T17:51:48+08:00">
-                2017-05-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
+        <div class="post-tags">
           
-
+            <a href="/tags/golang/" rel="tag"># golang</a>
           
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
-
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
         
-          
-            <p>test</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
       
 
       
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/15/begin/" rel="next" title="begin">
+                <i class="fa fa-chevron-left"></i> begin
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
 
       
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -542,6 +470,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -561,8 +493,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/slark.jpeg"
@@ -624,6 +565,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-defer关键字"><span class="nav-number">1.</span> <span class="nav-text">1. defer关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-坑"><span class="nav-number">2.</span> <span class="nav-text">2. 坑</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -744,6 +701,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
 
   
 
