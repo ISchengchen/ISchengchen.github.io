@@ -90,31 +90,22 @@
 
 
 
-<meta name="description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+<meta name="description" content="defer关键字defer用于资源的释放，常见使用模式：
 12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
-如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
-2. 坑三个例子
-1.
-123456func f() (result i">
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="golang defer关键字">
 <meta property="og:url" content="http://slark.info/2017/05/18/golang-defer详解/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+<meta property="og:description" content="defer关键字defer用于资源的释放，常见使用模式：
 12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
-如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
-2. 坑三个例子
-1.
-123456func f() (result i">
-<meta property="og:updated_time" content="2017-05-18T10:25:10.000Z">
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。">
+<meta property="og:updated_time" content="2017-05-18T10:33:45.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="golang defer关键字">
-<meta name="twitter:description" content="1. defer关键字defer用于资源的释放，常见使用模式：
+<meta name="twitter:description" content="defer关键字defer用于资源的释放，常见使用模式：
 12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
-如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。
-2. 坑三个例子
-1.
-123456func f() (result i">
+如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。">
 
 
 
@@ -374,10 +365,10 @@
       
 
       
-        <h2 id="1-defer关键字"><a href="#1-defer关键字" class="headerlink" title="1. defer关键字"></a>1. defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
+        <h2 id="defer关键字"><a href="#defer关键字" class="headerlink" title="defer关键字"></a>defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">f,err := os.Open(filename)</div><div class="line"><span class="keyword">if</span> err !=<span class="literal">nil</span> &#123;</div><div class="line">  <span class="built_in">panic</span>(err)</div><div class="line">&#125;</div><div class="line"><span class="keyword">defer</span> f.<span class="built_in">close</span>()</div></pre></td></tr></table></figure>
-<p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。</p>
-<h2 id="2-坑"><a href="#2-坑" class="headerlink" title="2. 坑"></a>2. 坑</h2><p>三个例子</p>
+<p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。<br><a id="more"></a></p>
+<h2 id="坑"><a href="#坑" class="headerlink" title="坑"></a>坑</h2><p>三个例子</p>
 <p>1.</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">    result++</div><div class="line">  &#125;()</div><div class="line">  <span class="keyword">return</span> <span class="number">0</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>2.</p>
@@ -575,7 +566,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-defer关键字"><span class="nav-number">1.</span> <span class="nav-text">1. defer关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-坑"><span class="nav-number">2.</span> <span class="nav-text">2. 坑</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#defer关键字"><span class="nav-number">1.</span> <span class="nav-text">defer关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#坑"><span class="nav-number">2.</span> <span class="nav-text">坑</span></a></li></ol></div>
             
 
           </div>

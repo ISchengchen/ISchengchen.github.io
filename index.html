@@ -363,31 +363,16 @@
 
       
         
-          
-            <h2 id="1-defer关键字"><a href="#1-defer关键字" class="headerlink" title="1. defer关键字"></a>1. defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
+          <h2 id="defer关键字"><a href="#defer关键字" class="headerlink" title="defer关键字"></a>defer关键字</h2><p>defer用于资源的释放，常见使用模式：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">f,err := os.Open(filename)</div><div class="line"><span class="keyword">if</span> err !=<span class="literal">nil</span> &#123;</div><div class="line">  <span class="built_in">panic</span>(err)</div><div class="line">&#125;</div><div class="line"><span class="keyword">defer</span> f.<span class="built_in">close</span>()</div></pre></td></tr></table></figure>
-<p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。</p>
-<h2 id="2-坑"><a href="#2-坑" class="headerlink" title="2. 坑"></a>2. 坑</h2><p>三个例子</p>
-<p>1.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">    result++</div><div class="line">  &#125;()</div><div class="line">  <span class="keyword">return</span> <span class="number">0</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>2.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  t := <span class="number">5</span></div><div class="line">  <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">    t = t + <span class="number">5</span></div><div class="line">  &#125;()</div><div class="line">  <span class="keyword">return</span> t</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>3.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span><span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(result <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">    result = result + <span class="number">5</span></div><div class="line">  &#125;(result)</div><div class="line">  <span class="keyword">return</span> <span class="number">1</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>这几个例子的结果并不是0， 10，6</p>
-<p>defer会在return或者panic之前被调用，但是由于return语句并不是一个原子语句，所以会先给返回值赋值，然后调用defer表达式，然后再返回</p>
-<p>下面改写一下几个例子：</p>
-<p>1.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  result = <span class="number">0</span></div><div class="line">  <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">    r++</div><div class="line">  &#125;()</div><div class="line">  <span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>所以返回1</p>
-<p>2.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  t := <span class="number">5</span></div><div class="line">  r = t <span class="comment">//给返回值赋值</span></div><div class="line">  <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</div><div class="line">    t = t + <span class="number">5</span></div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>所以返回5</p>
-<p>3.</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  r = <span class="number">1</span></div><div class="line">  <span class="function"><span class="keyword">func</span><span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">    r = r + <span class="number">5</span></div><div class="line">  &#125;(r)</div><div class="line">  <span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>由于是值传递而不是引用传递，所以匿名函数的r不会改变返回值的r，所以返回1。但是需要指出的是，改写前的函数内部的匿名函数传入的参数r的值为0，而不是1（在思考为什么）。</p>
-
-          
+<p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。<br>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/05/18/golang-defer详解/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
