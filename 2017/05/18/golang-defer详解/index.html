@@ -100,7 +100,7 @@
 <meta property="og:description" content="defer关键字defer用于资源的释放，常见使用模式：
 12345f,err := os.Open(filename)if err !=nil &amp;#123;  panic(err)&amp;#125;defer f.close()
 如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。">
-<meta property="og:updated_time" content="2017-05-18T10:33:45.000Z">
+<meta property="og:updated_time" content="2017-05-18T10:40:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="golang defer关键字">
 <meta name="twitter:description" content="defer关键字defer用于资源的释放，常见使用模式：
@@ -387,6 +387,9 @@
 <p>3.</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">f</span><span class="params">()</span> <span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">  r = <span class="number">1</span></div><div class="line">  <span class="function"><span class="keyword">func</span><span class="params">(r <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">    r = r + <span class="number">5</span></div><div class="line">  &#125;(r)</div><div class="line">  <span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>由于是值传递而不是引用传递，所以匿名函数的r不会改变返回值的r，所以返回1。但是需要指出的是，改写前的函数内部的匿名函数传入的参数r的值为0，而不是1（在思考为什么）。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://tiancaiamao.gitbooks.io/go-internals/content/zh/03.4.html" target="_blank" rel="external">https://tiancaiamao.gitbooks.io/go-internals/content/zh/03.4.html</a></li>
+</ul>
 
       
     </div>
@@ -566,7 +569,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#defer关键字"><span class="nav-number">1.</span> <span class="nav-text">defer关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#坑"><span class="nav-number">2.</span> <span class="nav-text">坑</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#defer关键字"><span class="nav-number">1.</span> <span class="nav-text">defer关键字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#坑"><span class="nav-number">2.</span> <span class="nav-text">坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文献"><span class="nav-number">3.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
             
 
           </div>
