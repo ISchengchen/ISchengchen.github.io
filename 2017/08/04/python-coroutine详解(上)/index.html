@@ -96,7 +96,7 @@
 <meta property="og:url" content="http://slark.info/2017/08/04/python-coroutine详解(上)/index.html">
 <meta property="og:site_name" content="Slark">
 <meta property="og:description" content="​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲corouti">
-<meta property="og:updated_time" content="2017-08-07T09:34:11.000Z">
+<meta property="og:updated_time" content="2017-08-07T09:35:04.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="python coroutine详解(上)">
 <meta name="twitter:description" content="​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲corouti">
@@ -337,7 +337,7 @@
       
 
       
-        <p>​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲coroutine。</p>
+        <p>​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲coroutine。<br><a id="more"></a></p>
 <h2 id="iterables-和-iterators"><a href="#iterables-和-iterators" class="headerlink" title="iterables 和 iterators"></a>iterables 和 iterators</h2><p> iterable是可迭代对象，</p>
 <p> 1、实现<code>__getitem__</code>（为了向后兼容，可能在将来被移除）,python会自动生成一个迭代器，并且从index=0开始获取item。</p>
 <p> 2、实现<code>__iter__</code>方法，并且该方法返回一个iterator(迭代器)。</p>
