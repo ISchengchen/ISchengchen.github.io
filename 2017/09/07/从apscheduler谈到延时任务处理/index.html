@@ -90,20 +90,17 @@
 
 
 
-<meta name="description" content="##apscheduler2.1源码分析
-Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or">
+<meta name="description" content="Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or remove old ones on t">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从apscheduler谈到延时任务处理(1)">
 <meta property="og:url" content="http://slark.info/2017/09/07/从apscheduler谈到延时任务处理/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="##apscheduler2.1源码分析
-Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or">
+<meta property="og:description" content="Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or remove old ones on t">
 <meta property="og:image" content="http://slark.info/images/apscheduler项目结构.png">
-<meta property="og:updated_time" content="2017-09-07T10:26:03.000Z">
+<meta property="og:updated_time" content="2017-09-07T10:29:25.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="从apscheduler谈到延时任务处理(1)">
-<meta name="twitter:description" content="##apscheduler2.1源码分析
-Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or">
+<meta name="twitter:description" content="Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or remove old ones on t">
 <meta name="twitter:image" content="http://slark.info/images/apscheduler项目结构.png">
 
 
@@ -342,8 +339,7 @@ Advanced Python Scheduler (APScheduler) is a Python library that lets you schedu
       
 
       
-        <p>##apscheduler2.1源码分析</p>
-<p>Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or remove old ones on the fly as you please. If you store your jobs in a database, they will also survive scheduler restarts and maintain their state. When the scheduler is restarted, it will then run all the jobs it should have run while it was offline。</p>
+        <p>Advanced Python Scheduler (APScheduler) is a Python library that lets you schedule your Python code to be executed later, either just once or periodically. You can add new jobs or remove old ones on the fly as you please. If you store your jobs in a database, they will also survive scheduler restarts and maintain their state. When the scheduler is restarted, it will then run all the jobs it should have run while it was offline。</p>
 <p>这是官方文档的介绍，目前apscheduler的最新版本为3.3.1，从2到3增加很多异步框架的支持，比如gevent,tornado,twisted,asyncio等。为了把脉络看的更清晰，我们先从2.1版本的代码看起。<br><a id="more"></a></p>
 <p><img src="/images/apscheduler项目结构.png" alt="项目结构"></p>
 <p>这是项目结构。我会把对源码的解读以<strong>注释</strong>的形式表现。</p>
