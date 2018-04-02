@@ -264,7 +264,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/03/14/2018年想做的事/">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/03/21/python字符编码那些坑/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Edwin">
@@ -283,7 +283,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/03/14/2018年想做的事/" itemprop="url">2018年想做的事</a></h1>
+                <a class="post-title-link" href="/2018/03/21/python字符编码那些坑/" itemprop="url">python字符编码那些坑</a></h1>
         
 
         <div class="post-meta">
@@ -295,8 +295,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-14T17:45:35+08:00">
-                2018-03-14
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-21T17:11:41+08:00">
+                2018-03-21
               </time>
             
 
@@ -332,8 +332,14 @@
       
         
           
-            <p>  2018年已经过去了两个多月，我怎么现在才想起来做一件俗气的事情–定目标。其实我觉得年底的时候，人还沉浸在过去一年的得失之中，现在过年的味道已经淡去，人也该定下心来了，我觉得正是思考新一年计划的时候，当然我的计划周期也是会到明年二月。<br>  先回顾一下2017年，2017年来到了现在这家创业公司，认识了一群很好的朋友，主要总结一下技术上的成长。<br>  1.能够独立搭建web后端系统了，对开源组件的选型有了一些了解。<br>  2.阅读了flask,sqlalchemy,gunicorn等框架的部分源代码。<br>  3.看了《fluent python》，感觉对python的了解上了一个档次。<br>  4.把http,tcp这些协议，负载均衡，缓存，数据库优化，消息队列等东西的了解有了很大进步，不过离精通还有很大距离。</p>
-<p>2018给自己定一些小目标:<br>  1.买房<br>  2.每周一篇技术博文，要干货，不吹水。<br>  3.把golang学到能用到工作中的地步<br>  4.把算法再啃一遍<br>  5.完成两个开源项目<br>  6.docker引入到项目部署<br>  6.很想去好好读一下redis的源码</p>
+            <p>  最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。<br>  python2的redis这个库取出来的str,不管存进去的是什么</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">import</span> redis</div><div class="line">redis_client = redis.StrictRedis(<span class="string">'host='</span>localhost<span class="string">', port=6379, db=0'</span>)</div><div class="line">value1, value2 = <span class="number">1</span>, <span class="string">u'str'</span></div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div><div class="line">redis_client.set(<span class="string">'key1'</span>, value1, ex=<span class="number">60</span>)</div><div class="line">redis_client.set(<span class="string">'key2'</span>, value2, ex=<span class="number">60</span>)</div><div class="line">value1 = redis_client.get(<span class="string">'key1'</span>)</div><div class="line">value2 = redis_client.get(<span class="string">'key2'</span>)</div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div></pre></td></tr></table></figure>
+<p>结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;type &apos;int&apos;&gt; &lt;type &apos;unicode&apos;&gt;</div><div class="line">&lt;type &apos;str&apos;&gt; &lt;type &apos;str&apos;&gt;</div></pre></td></tr></table></figure>
+<p>对python3进行同样的操作(代码略作修改适应py3语法）结果是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;class &apos;int&apos;&gt; &lt;class &apos;str&apos;&gt;</div><div class="line">&lt;class &apos;bytes&apos;&gt; &lt;class &apos;bytes&apos;&gt;</div></pre></td></tr></table></figure>
+<p>也就是说python3的redis库会取出的都是bytes,用str去跟bytes比较就会出现之前的bug。</p>
+<p>####py2的str与unicode<br>  py2里字符串被分成了unicode和str两种类型,str本质上是<br><a href="https://foofish.net/why-python-encoding-is-tricky.html" target="_blank" rel="external">https://foofish.net/why-python-encoding-is-tricky.html</a><br><a href="https://thief.one/2017/04/18/1/" target="_blank" rel="external">https://thief.one/2017/04/18/1/</a><br><a href="https://foofish.net/how-python3-handle-charset-encoding.html" target="_blank" rel="external">https://foofish.net/how-python3-handle-charset-encoding.html</a></p>
 
           
         
@@ -447,7 +453,7 @@
           <p>本文主要介绍一下在flask中使用log可能会遇到的问题。<br>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/12/28/flask-logging使用/#далее" rel="contents">
+            <a class="btn" href="/2017/12/28/flask-logging使用/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -563,7 +569,7 @@
           <p>把最关键的东西写在最前面，多看文档，文档不清晰的多看源码。sqlalchemy是个存在时间很长很庞大的项目，彻底掌握不容易。项目地址: <a href="https://github.com/zzzeek/sqlalchemy">https://github.com/zzzeek/sqlalchemy</a> 本文主要谈论在web application这个使用场景中的session的生命周期。<br>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/10/18/sqlalchemy-session作用范围/#далее" rel="contents">
+            <a class="btn" href="/2017/10/18/sqlalchemy-session作用范围/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -680,7 +686,7 @@
 <p>这是官方文档的介绍，目前apscheduler的最新版本为3.3.1，从2到3增加很多异步框架的支持，比如gevent,tornado,twisted,asyncio等。为了把脉络看的更清晰，我们看2.1版本的代码。<br>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/09/07/从apscheduler谈到延时任务处理-一/#далее" rel="contents">
+            <a class="btn" href="/2017/09/07/从apscheduler谈到延时任务处理-一/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -796,7 +802,7 @@
           <p>​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲coroutine。<br>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/08/04/python-coroutine详解(上)/#далее" rel="contents">
+            <a class="btn" href="/2017/08/04/python-coroutine详解(上)/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -914,7 +920,7 @@
 <p>如果有多个defer表达式，调用顺序相当于栈（FILO），越后面的defer表达式越先被调用。<br>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2017/05/18/golang-defer详解/#далее" rel="contents">
+            <a class="btn" href="/2017/05/18/golang-defer详解/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
