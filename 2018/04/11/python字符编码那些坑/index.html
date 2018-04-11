@@ -96,7 +96,7 @@
 <meta property="og:url" content="http://slark.info/2018/04/11/python字符编码那些坑/index.html">
 <meta property="og:site_name" content="Slark">
 <meta property="og:description" content="最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。  python2的redis这个库取出来的str,不管存进去的是什么">
-<meta property="og:updated_time" content="2018-04-11T07:45:59.274Z">
+<meta property="og:updated_time" content="2018-04-11T07:47:41.500Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="python字符编码那些坑">
 <meta name="twitter:description" content="最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。  python2的redis这个库取出来的str,不管存进去的是什么">
@@ -327,8 +327,7 @@
       
 
       
-        <hr>
-<p>  最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。<br>  python2的redis这个库取出来的str,不管存进去的是什么<br>  <a id="more"></a></p>
+        <p>  最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。<br>  python2的redis这个库取出来的str,不管存进去的是什么<br>  <a id="more"></a></p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">import</span> redis</div><div class="line">redis_client = redis.StrictRedis(<span class="string">'host='</span>localhost<span class="string">', port=6379, db=0'</span>)</div><div class="line">value1, value2 = <span class="number">1</span>, <span class="string">u'str'</span></div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div><div class="line">redis_client.set(<span class="string">'key1'</span>, value1, ex=<span class="number">60</span>)</div><div class="line">redis_client.set(<span class="string">'key2'</span>, value2, ex=<span class="number">60</span>)</div><div class="line">value1 = redis_client.get(<span class="string">'key1'</span>)</div><div class="line">value2 = redis_client.get(<span class="string">'key2'</span>)</div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div></pre></td></tr></table></figure>
 <p>结果</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;type &apos;int&apos;&gt; &lt;type &apos;unicode&apos;&gt;</div><div class="line">&lt;type &apos;str&apos;&gt; &lt;type &apos;str&apos;&gt;</div></pre></td></tr></table></figure>
