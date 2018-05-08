@@ -1,0 +1,693 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="python 源码解析 异步编程," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/slark.jpeg?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="为了解决高并发问题，这几年协程（或者纤程）得到了很大的发展，各种各样的库层出不穷。而golang在语言层面通过go关键字生成了一个goroutine，使用channel实现goroutine之间的通信，很大程度上了降低了程序员的心智负担。这方面，python也做了很大努力，特别是到了python3.5以后，pep429提出了async和await，从而明确了generator_base_cor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="curio源码解析">
+<meta property="og:url" content="http://slark.info/2018/05/08/curio源码解析/index.html">
+<meta property="og:site_name" content="Slark">
+<meta property="og:description" content="为了解决高并发问题，这几年协程（或者纤程）得到了很大的发展，各种各样的库层出不穷。而golang在语言层面通过go关键字生成了一个goroutine，使用channel实现goroutine之间的通信，很大程度上了降低了程序员的心智负担。这方面，python也做了很大努力，特别是到了python3.5以后，pep429提出了async和await，从而明确了generator_base_cor">
+<meta property="og:updated_time" content="2018-05-08T09:49:42.685Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="curio源码解析">
+<meta name="twitter:description" content="为了解决高并发问题，这几年协程（或者纤程）得到了很大的发展，各种各样的库层出不穷。而golang在语言层面通过go关键字生成了一个goroutine，使用channel实现goroutine之间的通信，很大程度上了降低了程序员的心智负担。这方面，python也做了很大努力，特别是到了python3.5以后，pep429提出了async和await，从而明确了generator_base_cor">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://slark.info/2018/05/08/curio源码解析/"/>
+
+
+
+
+
+  <title>curio源码解析 | Slark</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Slark</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">coding and thinking</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/05/08/curio源码解析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Edwin">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/slark.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Slark">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">curio源码解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-08T11:02:51+08:00">
+                2018-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>  为了解决高并发问题，这几年协程（或者纤程）得到了很大的发展，各种各样的库层出不穷。而golang在语言层面通过go关键字生成了一个goroutine，使用channel实现goroutine之间的通信，很大程度上了降低了程序员的心智负担。这方面，python也做了很大努力，特别是到了python3.5以后，pep429提出了async和await，从而明确了generator_base_coroutine 和native_coroutine之间的界限，并且asyncio这个包被引入标准库。但是我今天要讲的是David Beazley写的一个curio，他觉得asyncio的api不够简洁，于是就自己撸了一个，我觉得asyncio的future，task，promise等等确实概念有点乱，后面再挖个坑，讲讲asyncio。<br>  python的协程发展历史，推荐这篇译文<a href="http://blog.rainy.im/2016/03/09/how-the-heck-does-async-await-work-in-python-3-5" target="_blank" rel="external">http://blog.rainy.im/2016/03/09/how-the-heck-does-async-await-work-in-python-3-5</a> 从yield到yield from到async/await感觉是要耗费一点心力去理解的，所以再推荐一本书《fluent python》，里面讲的听清楚的，买个印影版，三杯星巴克的价格。</p>
+<p>从一个简单的echo_server的例子看起</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">from</span> curio <span class="keyword">import</span> run, spawn</div><div class="line"><span class="keyword">from</span> curio.socket <span class="keyword">import</span> *</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">echo_server</span><span class="params">(address)</span>:</span></div><div class="line">    sock = socket(AF_INET, SOCK_STREAM)</div><div class="line">    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, <span class="number">1</span>)</div><div class="line">    sock.bind(address)</div><div class="line">    sock.listen(<span class="number">5</span>)</div><div class="line">    print(<span class="string">'Server listening at'</span>, address)</div><div class="line">    <span class="keyword">async</span> <span class="keyword">with</span> sock:</div><div class="line">        <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">            client, addr = <span class="keyword">await</span> sock.accept()</div><div class="line">            print(<span class="string">'Connection from'</span>, addr)</div><div class="line">            <span class="keyword">await</span> spawn(echo_client, client)</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">echo_client</span><span class="params">(client)</span>:</span></div><div class="line">    <span class="keyword">async</span> <span class="keyword">with</span> client:</div><div class="line">        <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">            data = <span class="keyword">await</span> client.recv(<span class="number">10000</span>)</div><div class="line">            <span class="keyword">if</span> <span class="keyword">not</span> data:</div><div class="line">                <span class="keyword">break</span></div><div class="line">            <span class="keyword">await</span> client.sendall(data)</div><div class="line">    print(<span class="string">'Connection closed'</span>)</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</div><div class="line">    run(echo_server, (<span class="string">''</span>, <span class="number">25000</span>))</div></pre></td></tr></table></figure>
+<p>熟悉socket编程的应该知道，如果一个socket是阻塞的（可以通过setblocking设置)，那么程序会在accept以及recv和send（需要等待内核准备好数据）的时候进程挂起。<br>理论上我们应该从run方法看进去，看这个程序的整个运行过程。但是我们先看一下curio自己实现的非阻塞的socket吧。</p>
+<blockquote>
+<p>Curio is primarily concerned with the scheduling of tasks. In<br>particular, the kernel does not actually perform any I/O.  It merely<br>blocks tasks that need to wait for reading or writing.  To actually<br>perform I/O, you use the existing file and socket abstractions<br>already provided by the Python standard library.  The only<br>difference is that you need to take extra steps to manage their<br>non-blocking behavior.  The classes in this file provide wrappers<br>around socket-like and file-like objects. Methods responsible for<br>reading/writing have a small amount of extra logic to added to<br>handle their scheduling.  Other methods are simply passed through to<br>the original object via delegation.</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># socket.py</span></div><div class="line"><span class="meta">@wraps(_socket.socket)</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">socket</span><span class="params">(*args, **kwargs)</span>:</span></div><div class="line">    <span class="keyword">return</span> io.Socket(_socket.socket(*args, **kwargs))</div></pre></td></tr></table></figure>
+<p>对原生的socket进行了进行了wrap,看进Socket这个类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># io.py</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Socket</span><span class="params">(object)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Non-blocking wrapper around a socket object.   The original socket is put</div><div class="line">    into a non-blocking mode when it's wrapped.</div><div class="line">    '''</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, sock)</span>:</span></div><div class="line">        self._socket = sock</div><div class="line">        self._socket.setblocking(<span class="keyword">False</span>)</div><div class="line">        self._fileno = _Fd(sock.fileno())</div><div class="line"></div><div class="line">        <span class="comment"># Commonly used bound methods</span></div><div class="line">        self._socket_send = sock.send</div><div class="line">        self._socket_recv = sock.recv</div><div class="line">    </div><div class="line">    <span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">accept</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">            <span class="keyword">try</span>:</div><div class="line">                client, addr = self._socket.accept()</div><div class="line">                <span class="keyword">return</span> type(self)(client), addr</div><div class="line">            <span class="keyword">except</span> WantRead:</div><div class="line">                <span class="keyword">await</span> _read_wait(self._fileno)</div></pre></td></tr></table></figure>
+<p>可以看出，这个wrapper把socket设置为非阻塞模式，我们知道在非阻塞模式下，一个socket在进行系统调用（比如read）以后，如果内核数据没有准备好，那么会直接返回一个错误，在python3的socket库里封装了这样一个错误BlockingIOError,我们看一下非阻塞的accept方法，调用accept以后，catch了WantedRead:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">try</span>:</div><div class="line">    <span class="keyword">from</span> ssl <span class="keyword">import</span> SSLWantReadError, SSLWantWriteError</div><div class="line"></div><div class="line">    WantRead = (BlockingIOError, InterruptedError, SSLWantReadError)</div><div class="line">    WantWrite = (BlockingIOError, InterruptedError, SSLWantWriteError)</div><div class="line"><span class="keyword">except</span> ImportError:  <span class="comment"># pragma: no cover</span></div><div class="line">    WantRead = (BlockingIOError, InterruptedError)</div><div class="line">    WantWrite = (BlockingIOError, InterruptedError)</div></pre></td></tr></table></figure>
+<p>果然，这个WantedError是个tuple,包含了数据尚未准备好和被打断的错误。<br>然后await 另一个协程_read_wait(),交出了执行权,于是我们看进traps.py这个模块。</p>
+<blockquote>
+<p>Coroutines corresponding to the kernel traps.  These functions<br>provide the bridge from tasks to the underlying kernel. This is the<br>only place where the explicit @coroutine decorator needs to be used.<br>All other code in curio and in user-tasks should use async/await<br>instead.  Direct use by users is allowed, but if you’re working with<br>these traps directly, there is probably a higher level interface<br>that simplifies the problem you’re trying to solve (e.g., Socket,<br>File, objects, etc.).</p>
+</blockquote>
+<p>这个模块联系任务协程和kernel，这个我们后面再看kernel做了什么，先看traps做了什么</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># traps.py</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Traps</span><span class="params">(IntEnum)</span>:</span></div><div class="line">    _trap_io = <span class="number">0</span></div><div class="line">    _trap_future_wait = <span class="number">1</span></div><div class="line">    _trap_sleep = <span class="number">2</span></div><div class="line">    _trap_sched_wait = <span class="number">3</span></div><div class="line">    _trap_sched_wake = <span class="number">4</span></div><div class="line">    _trap_cancel_task = <span class="number">5</span></div><div class="line">    _trap_get_kernel = <span class="number">6</span></div><div class="line">    _trap_get_current = <span class="number">7</span></div><div class="line">    _trap_set_timeout = <span class="number">8</span></div><div class="line">    _trap_unset_timeout = <span class="number">9</span></div><div class="line">    _trap_clock = <span class="number">10</span></div><div class="line">    _trap_spawn = <span class="number">11</span></div><div class="line"></div><div class="line"></div><div class="line">globals().update((trap.name, trap) <span class="keyword">for</span> trap <span class="keyword">in</span> Traps)</div><div class="line"></div><div class="line"></div><div class="line"><span class="meta">@coroutine</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">_read_wait</span><span class="params">(fileobj)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Wait until reading can be performed.  If another task is waiting</div><div class="line">    on the same file, a ResourceBusy exception is raised. </div><div class="line">    '''</div><div class="line">    <span class="keyword">yield</span> (_trap_io, fileobj, EVENT_READ, <span class="string">'READ_WAIT'</span>)</div></pre></td></tr></table></figure>
+<p>Trap这个类主要是更新了一波全局变量，这个后面会在kernel用来注册这几个方法。看_read_wait，这是用types.coroutine这个装饰器装饰的一个generator_based_coroutine,它只做了一件事，yield一个tuple，那么说明程序运行到yield就交出了执行权，等待一个send，然后把这个tuple返回出来。从echo_server这个example的accept方法看进去，看到这里似乎线索断了，所以我们回到run方法。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># kernal.py</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(corofunc, *args, with_monitor=False, selector=None,</span></span></div><div class="line">        debug=None, activations=None, **extra):</div><div class="line">    <span class="string">'''</span></div><div class="line">    Run the curio kernel with an initial task and execute until all</div><div class="line">    tasks terminate.  Returns the task's final result (if any). This</div><div class="line">    is a convenience function that should primarily be used for</div><div class="line">    launching the top-level task of an curio-based application.  It</div><div class="line">    creates an entirely new kernel, runs the given task to completion,</div><div class="line">    and concludes by shutting down the kernel, releasing all resources used.</div><div class="line"></div><div class="line">    Don't use this function if you're repeatedly launching a lot of</div><div class="line">    new tasks to run in curio. Instead, create a Kernel instance and</div><div class="line">    use its run() method instead.</div><div class="line">    '''</div><div class="line"></div><div class="line">    kernel = Kernel(selector=selector, debug=debug, activations=activations,</div><div class="line">                    **extra)</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment"># Check if a monitor has been requested</span></div><div class="line">    <span class="keyword">if</span> with_monitor <span class="keyword">or</span> <span class="string">'CURIOMONITOR'</span> <span class="keyword">in</span> os.environ:   <span class="comment"># pragma: no cover</span></div><div class="line">        <span class="keyword">from</span> .monitor <span class="keyword">import</span> Monitor</div><div class="line">        m = Monitor(kernel)</div><div class="line">        kernel._call_at_shutdown(m.close)</div><div class="line"></div><div class="line">    <span class="keyword">with</span> kernel:</div><div class="line">        <span class="keyword">return</span> kernel.run(corofunc, *args)</div></pre></td></tr></table></figure>
+<p>贴代码的时候我都把注释带上了，在阅读代码的过程中，这些作者的注释能给你一个整体的印象，因为很多底层代码确实很复杂而零碎，整体把握有时候能让你知道下面要干啥了，而不至于被代码淹没。一段废话以后，我们来看一下这个run方法。<br>with_monitor参数为True的时候，会增加一个monitor的task,用来监控task的运行情况，官方文档中有提到，这个东西我觉得挺实用的，当然还有更高级的debug方法，官方文档也有提到，相比gevent打完patch以后难调试相比，这个显然有一定优势。<br>with kernel说明这是个上下文管理器，于是看下<em>exit</em>做了啥</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">__exit__</span><span class="params">(self, ty, val, tb)</span>:</span></div><div class="line">    <span class="keyword">if</span> <span class="keyword">not</span> ty <span class="keyword">or</span> ty <span class="keyword">in</span> &#123; KeyboardInterrupt, SystemExit &#125;:</div><div class="line">        self.run(shutdown=<span class="keyword">True</span>)</div></pre></td></tr></table></figure>
+<p>看起来似乎是关闭任务。<br>直接看kernal.run</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div></pre></td><td class="code"><pre><div class="line">def run(self, corofunc=None, *args, shutdown=False):</div><div class="line">    ## 根据corofunc的类型创建一个启动的协程</div><div class="line">    coro = meta.instantiate_coroutine(corofunc, *args) if corofunc else None</div><div class="line">    </div><div class="line">    ## 确保每个线程只有一个excutor，因为协程是在线程内部调度，任何时候都是单线程的。</div><div class="line">    with meta.running():</div><div class="line">        ## 生成kernel的真正的执行者，也就是runtime</div><div class="line">        if not self._runner or not self._runner.gi_frame:</div><div class="line">            self._runner = self._run_coro()</div><div class="line">            ## 启动运行时</div><div class="line">            self._runner.send(None)</div><div class="line"></div><div class="line">        # Submit the given coroutine (if any)</div><div class="line">        ## 把开始生成的coroutine传进运行时。</div><div class="line">        if coro or not shutdown:</div><div class="line">            ret_val, ret_exc = self._runner.send(coro)</div><div class="line">        else:</div><div class="line">            ret_val = ret_exc = None</div><div class="line"></div><div class="line">        # If shutdown has been requested, run the shutdown process</div><div class="line">        </div><div class="line">        ## 这个过程是关闭kernel的过程，也就是之前kernel的__exit__方法调用的时候的过程，</div><div class="line">        ## 主要步骤：</div><div class="line">        ## 1.先把剩余的task中的非kernel task都cancel掉，然后删掉kernel task，关闭runtime</div><div class="line">        ## 2.调用_shutdown_func中的方法（比如monitor启动的时候加入了一个m.close）</div><div class="line">        if shutdown:</div><div class="line">            # For &quot;reasons&quot; related to task scheduling, the task</div><div class="line">            # of shutting down all remaining tasks is best managed</div><div class="line">            # by a launching a task dedicated to carrying out the task (sic)</div><div class="line">            async def _shutdown_tasks(tocancel):</div><div class="line">                for task in tocancel:</div><div class="line">                    await task.cancel()</div><div class="line"></div><div class="line">            while self._tasks:</div><div class="line">                tocancel = [task for task in self._tasks.values()</div><div class="line">                            if task.id != self._kernel_task_id]</div><div class="line">                tocancel.sort(key=lambda t: t.id)</div><div class="line">                if self._kernel_task_id:</div><div class="line">                    tocancel.append(self._tasks[self._kernel_task_id])</div><div class="line">                self._runner.send(_shutdown_tasks(tocancel))</div><div class="line">                self._kernel_task_id = None</div><div class="line">            self._runner.close()</div><div class="line">            self._runner = None</div><div class="line"></div><div class="line">            # Call registered shutdown functions</div><div class="line">            for func in self._shutdown_funcs:</div><div class="line">                func()</div><div class="line">            self._shutdown_funcs = None</div><div class="line"></div><div class="line">        if ret_exc:</div><div class="line">            raise ret_exc</div><div class="line">        else:</div><div class="line">            return ret_val</div></pre></td></tr></table></figure>
+<p>首先是把传进去的协程方法包装成统一的一个协程,方法也挺有意思</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># meta.py</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">instantiate_coroutine</span><span class="params">(corofunc, *args, **kwargs)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Try to instantiate a coroutine. If corofunc is already a coroutine,</div><div class="line">    we're done.  If it's a coroutine function, we call it inside an</div><div class="line">    async context with the given arguments to create a coroutine.  If</div><div class="line">    it's not a coroutine, we call corofunc(*args, **kwargs) and hope</div><div class="line">    for the best.</div><div class="line">    '''</div><div class="line">    <span class="keyword">if</span> inspect.iscoroutine(corofunc) <span class="keyword">or</span> inspect.isgenerator(corofunc):</div><div class="line">        <span class="keyword">return</span> corofunc</div><div class="line"></div><div class="line">    <span class="keyword">if</span> <span class="keyword">not</span> iscoroutinefunction(corofunc) <span class="keyword">and</span> <span class="keyword">not</span> getattr(corofunc, <span class="string">'_async_thread'</span>, <span class="keyword">False</span>):</div><div class="line">        coro = corofunc(*args, **kwargs)</div><div class="line">        <span class="keyword">if</span> <span class="keyword">not</span> inspect.iscoroutine(coro):</div><div class="line">            <span class="keyword">raise</span> TypeError(<span class="string">'Could not create coroutine from %s'</span> % corofunc)</div><div class="line">        <span class="keyword">return</span> coro</div><div class="line"></div><div class="line">    <span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">context</span><span class="params">()</span>:</span></div><div class="line">        <span class="keyword">return</span> corofunc(*args, **kwargs)</div><div class="line"></div><div class="line">    <span class="keyword">try</span>:</div><div class="line">        context().send(<span class="keyword">None</span>)</div><div class="line">    <span class="keyword">except</span> StopIteration <span class="keyword">as</span> e:</div><div class="line">        <span class="keyword">return</span> e.value</div></pre></td></tr></table></figure>
+<p>如果是个原生coroutine（async def形式）或者是个生成器协程（yield形式），那么直接返回，如果不是一个协程方法并且没有_async_thread属性，那么尝试调用一下这个方法，如果不能生成一个协程，那么没办法了。如果是一个协程函数，那么调用以后，send一下，send是启动协程的方式。<br>来一段官方文档</p>
+<blockquote>
+<p>The word “coroutine”, like the word “generator”, is used for two different (though related) concepts:</p>
+<p>The function that defines a coroutine (a function definition using async def or decorated with @asyncio.coroutine). If disambiguation is needed we will call this a coroutine function (iscoroutinefunction() returns True).</p>
+<p>The object obtained by calling a coroutine function. This object represents a computation or an I/O operation (usually a combination) that will complete eventually. If disambiguation is needed we will call it a coroutine object (iscoroutine() returns True).</p>
+</blockquote>
+<p>简单来说：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</div><div class="line">    run(echo_server((<span class="string">''</span>, <span class="number">25000</span>)))</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</div><div class="line">    run(echo_server, (<span class="string">''</span>, <span class="number">25000</span>))</div></pre></td></tr></table></figure>
+<p>两种都行的通。<br>由于代码比较多，所以我决定以注释的形式写在上面的代码里，我现在交出控制权，跳回run方法吧，也就是await run_comment()</p>
+<p>可以看到kernel中很核心的东西是他的_run_coro方法，也就是它的运行时，这个方法有接近600行。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># ------------------------------------------------------------</span></div><div class="line">   <span class="comment"># Main kernel runtime</span></div><div class="line">   <span class="comment">#</span></div><div class="line">   <span class="comment"># This is the main kernel execution environment.  To better support</span></div><div class="line">   <span class="comment"># pause/resume functionality, it is implemented as a coroutine.</span></div><div class="line">   <span class="comment"># The above run() method starts it and uses the send() method to</span></div><div class="line">   <span class="comment"># send in tasks to run.  By implementing it as a coroutine,</span></div><div class="line">   <span class="comment"># various set-up steps don't have to be repeated on each</span></div><div class="line">   <span class="comment"># invocation of run().</span></div><div class="line">   <span class="comment">#</span></div><div class="line">   <span class="comment"># At first glance, this function is going to look giant and</span></div><div class="line">   <span class="comment"># insane. It is implementing the kernel runtime as a self-contained</span></div><div class="line">   <span class="comment"># black box.  There is no external API.  The only possible </span></div><div class="line">   <span class="comment"># communication is via traps defined in curio/traps.py.  </span></div><div class="line">   <span class="comment"># It's best to think of this as a "program within a program".  </span></div><div class="line">   </div><div class="line"> <span class="function"><span class="keyword">def</span> <span class="title">_run_coro</span><span class="params">(kernel)</span>:</span></div><div class="line"></div><div class="line">       <span class="comment"># Motto:  "What happens in the kernel stays in the kernel"</span></div><div class="line"></div><div class="line">       <span class="comment"># ---- Kernel State</span></div><div class="line">       current = <span class="keyword">None</span>                          <span class="comment"># Currently running task</span></div><div class="line">       selector = kernel._selector             <span class="comment"># Event selector</span></div><div class="line">       ready = kernel._ready                   <span class="comment"># Ready queue</span></div><div class="line">       tasks = kernel._tasks                   <span class="comment"># Task table</span></div><div class="line">       sleepq = kernel._sleepq                 <span class="comment"># Sleeping task queue</span></div><div class="line">       wake_queue = kernel._wake_queue         <span class="comment"># External wake queue</span></div><div class="line">       _activations = []</div><div class="line"></div><div class="line">       <span class="comment"># ---- Bound methods</span></div><div class="line">       selector_register = selector.register</div><div class="line">       selector_unregister = selector.unregister</div><div class="line">       selector_modify = selector.modify</div><div class="line">       selector_select = selector.select</div><div class="line">       selector_getkey = selector.get_key</div><div class="line"></div><div class="line">       ready_popleft = ready.popleft</div><div class="line">       ready_append = ready.append</div><div class="line">       time_monotonic = time.monotonic</div></pre></td></tr></table></figure>
+<p>这里主要就是初始化一些数据结构，并且绑定了selector模块的一些方法，selector模块是python3提供的封装的IO多路复用的模块，提供的defaultSelector会自动选择该平台最合适的IO模型，比如linux会用epoll,FreeBSD上用kqueue,如果都没有，那退化到select或者poll。所谓IO多路复用会将需要监听的文件描述符和需要监听的事件（读或者写）注册到selector上，然后当内核通知某个文件描述符的注册事件准备就绪的时候，就可以返回该描述符，从而避免IO阻塞，虽然IO模型一般分成五种，参看《unix网络编程：卷1网络套接字API》6.2 I/O模型，但是我的理解其实多路复用也是阻塞的，只是IO阻塞在了selector上面，但是并不影响新的IO事件注册到selector，由selector告诉你哪个fd准备就绪了，然后进行IO，也就是原本等待e个描述符，成等待多本描述符，描而提高了效率，再良心推荐一波《unix网络编程：卷1网络套接字API》网上很多select、poll、epoll的文章很可能就是某些段落节选。</p>
+<p>下面通过注释的方式慢慢分析</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="comment">## 这里的用法比较黑魔法（可能只是我locals()用的少）</span></div><div class="line"><span class="comment">## 首先_traps是一个list,然后Traps是IntEnum类型，之前列出过。</span></div><div class="line"><span class="comment">## trap.name就是'_trap_io','_trap_future_wait'等，</span></div><div class="line"><span class="comment">## 然后在locals()['_trap_io']获取到的就是的_run_coro的inner funtion _trap_io的一个对象,在kernel.py的380行-586行都是定义了这些inner function。</span></div><div class="line"><span class="comment">##  traps是这个样子的：[&lt;function Kernel._run_coro.&lt;locals&gt;._trap_io at 0x104e2f840&gt;]</span></div><div class="line"></div><div class="line">kernel._traps = traps = [<span class="keyword">None</span>] * len(Traps)</div><div class="line"><span class="keyword">for</span> trap <span class="keyword">in</span> Traps:</div><div class="line">    traps[trap] = locals()[trap.name]</div><div class="line">    </div><div class="line"><span class="comment">## 初始化核心任务</span></div><div class="line"><span class="keyword">if</span> kernel._kernel_task_id <span class="keyword">is</span> <span class="keyword">None</span>:</div><div class="line">    _init_loopback()</div><div class="line">    t = _new_task(_kernel_task())</div><div class="line">    t.daemon = <span class="keyword">True</span></div><div class="line">    kernel._kernel_task_id = t.id</div><div class="line">    <span class="keyword">del</span> t</div><div class="line">    </div><div class="line"><span class="comment">## 在进入主循环之前，干掉准备执行的task里所有的高优先级IO（被标记为_last_io的tast)</span></div><div class="line"><span class="comment">## 看task.py的时候再看优先级的具体设定</span></div><div class="line"><span class="keyword">for</span> task <span class="keyword">in</span> kernel._ready:</div><div class="line">    <span class="keyword">if</span> task._last_io:</div><div class="line">        _unregister_event(*task._last_io)</div><div class="line">        task._last_io = <span class="keyword">None</span></div><div class="line"></div><div class="line"><span class="comment"># 初始化act,跟任务调度相关。</span></div><div class="line">_activations = [ act() <span class="keyword">if</span> (isinstance(act, type) <span class="keyword">and</span> issubclass(act, Activation)) <span class="keyword">else</span> act</div><div class="line">                 <span class="keyword">for</span> act <span class="keyword">in</span> kernel._activations ]</div><div class="line">kernel._activations = _activations</div><div class="line"></div><div class="line"><span class="keyword">for</span> act <span class="keyword">in</span> _activations:</div><div class="line">    act.activate(kernel)</div><div class="line">main_task = <span class="keyword">None</span></div></pre></td></tr></table></figure>
+<p>终于要进入kernel的主循环了。。。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">while</span> <span class="keyword">True</span>:</div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment"># Wait for work to be submitted if nothing to run</span></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment">##写的很清楚了，没有任务的时候创建一个任务</span></div><div class="line"></div><div class="line">           <span class="keyword">if</span> (main_task <span class="keyword">and</span> main_task.terminated) <span class="keyword">or</span> (<span class="keyword">not</span> ready <span class="keyword">and</span> <span class="keyword">not</span> main_task):</div><div class="line">               <span class="keyword">if</span> main_task:</div><div class="line">                   main_task._joined = <span class="keyword">True</span></div><div class="line">               <span class="comment">## 首次进入循环是没有task的，于是我们看回run方</span></div><div class="line">               <span class="comment">##self._runner.send(None）以后，传入了coroutine self._runner.send(coro),</span></div><div class="line">               <span class="comment">## 也就是这里拿到的coro</span></div><div class="line">               coro = (<span class="keyword">yield</span> (main_task.next_value, main_task.next_exc)) <span class="keyword">if</span> main_task <span class="keyword">else</span> (<span class="keyword">yield</span> (<span class="keyword">None</span>, <span class="keyword">None</span>))</div><div class="line">               <span class="comment">## 于是我们拿到了一个main_task</span></div><div class="line">               main_task = _new_task(coro) <span class="keyword">if</span> coro <span class="keyword">else</span> <span class="keyword">None</span></div><div class="line">               <span class="keyword">del</span> coro</div><div class="line"></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment"># I/O Polling/Waiting</span></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment">## 这一块就是处理利用selector模块进行IO多路复用，几乎所有的标榜高性能网络IO库都会用到这一块，比如java的netty。</span></div><div class="line">           <span class="keyword">if</span> ready <span class="keyword">or</span> <span class="keyword">not</span> main_task:</div><div class="line">               timeout = <span class="number">0</span></div><div class="line">           <span class="keyword">else</span>:</div><div class="line">               current_time = time.monotonic()</div><div class="line">               timeout = sleepq.next_deadline(current_time)</div><div class="line">           <span class="keyword">try</span>:</div><div class="line">               events = selector_select(timeout)</div><div class="line">           <span class="keyword">except</span> OSError <span class="keyword">as</span> e:  <span class="comment"># pragma: no cover</span></div><div class="line">               <span class="comment"># If there is nothing to select, windows throws an</span></div><div class="line">               <span class="comment"># OSError, so just set events to an empty list.</span></div><div class="line">               <span class="keyword">if</span> e.errno != getattr(errno, <span class="string">'WSAEINVAL'</span>, <span class="keyword">None</span>):</div><div class="line">                   <span class="keyword">raise</span></div><div class="line">               events = []</div><div class="line"></div><div class="line">           <span class="comment"># Reschedule tasks with completed I/O</span></div><div class="line">           <span class="keyword">for</span> key, mask <span class="keyword">in</span> events:</div><div class="line">               rtask, wtask = key.data</div><div class="line">               intfd = isinstance(key.fileobj, int)</div><div class="line">               <span class="keyword">if</span> mask &amp; EVENT_READ:</div><div class="line">                   <span class="comment"># Discussion: If the associated fileobj is *not* a</span></div><div class="line">                   <span class="comment"># bare integer file descriptor, we keep a record</span></div><div class="line">                   <span class="comment"># of the last I/O event in _last_io and leave the</span></div><div class="line">                   <span class="comment"># task registered on the event loop.  If it</span></div><div class="line">                   <span class="comment"># performs the same I/O operation again, it will</span></div><div class="line">                   <span class="comment"># get a speed boost from not having to re-register</span></div><div class="line">                   <span class="comment"># its event. However, it's not safe to use this</span></div><div class="line">                   <span class="comment"># optimization with bare integer fds.  These fds</span></div><div class="line">                   <span class="comment"># often get reused and there is a possibility that</span></div><div class="line">                   <span class="comment"># a fd will get closed and reopened on a different</span></div><div class="line">                   <span class="comment"># resource without it being detected by the</span></div><div class="line">                   <span class="comment"># kernel.  For that case, its critical that we not</span></div><div class="line">                   <span class="comment"># leave the fd on the event loop.</span></div><div class="line">                   rtask._last_io = <span class="keyword">None</span> <span class="keyword">if</span> intfd <span class="keyword">else</span> (key.fileobj, EVENT_READ)</div><div class="line">                   _reschedule_task(rtask)</div><div class="line">                   mask &amp;= ~EVENT_READ</div><div class="line">                   rtask = <span class="keyword">None</span></div><div class="line"></div><div class="line">               <span class="keyword">if</span> mask &amp; EVENT_WRITE:</div><div class="line">                   wtask._last_io = <span class="keyword">None</span> <span class="keyword">if</span> intfd <span class="keyword">else</span> (key.fileobj, EVENT_WRITE)</div><div class="line">                   _reschedule_task(wtask)</div><div class="line">                   mask &amp;= ~EVENT_WRITE</div><div class="line">                   wtask = <span class="keyword">None</span></div><div class="line"></div><div class="line">               <span class="comment"># Unregister the task if fileobj is not an integer fd (see</span></div><div class="line">               <span class="comment"># note above).</span></div><div class="line">               <span class="keyword">if</span> intfd:</div><div class="line">                   <span class="keyword">if</span> mask:</div><div class="line">                       selector_modify(key.fileobj, mask, (rtask, wtask))</div><div class="line">                   <span class="keyword">else</span>:</div><div class="line">                       selector_unregister(key.fileobj)</div><div class="line"></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment"># Time handling (sleep/timeouts</span></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line"></div><div class="line">           current_time = time_monotonic()</div><div class="line">           <span class="keyword">for</span> tm, (taskid, sleep_type) <span class="keyword">in</span> sleepq.expired(current_time):</div><div class="line">               <span class="comment"># When a task wakes, verify that the timeout value matches that stored</span></div><div class="line">               <span class="comment"># on the task. If it differs, it means that the task completed its</span></div><div class="line">               <span class="comment"># operation, was cancelled, or is no longer concerned with this</span></div><div class="line">               <span class="comment"># sleep operation.  In that case, we do nothing</span></div><div class="line">               <span class="keyword">if</span> taskid <span class="keyword">in</span> tasks:</div><div class="line">                   task = tasks[taskid]</div><div class="line">                   <span class="keyword">if</span> sleep_type == <span class="string">'sleep'</span>:</div><div class="line">                       <span class="keyword">if</span> tm == task.sleep:</div><div class="line">                           task.sleep = <span class="keyword">None</span></div><div class="line">                           _reschedule_task(task, value=current_time)</div><div class="line">                   <span class="keyword">else</span>:</div><div class="line">                       <span class="keyword">if</span> tm == task.timeout:</div><div class="line">                           task.timeout = <span class="keyword">None</span></div><div class="line">                           <span class="comment"># If cancellation is allowed and the task is blocked, reschedule it</span></div><div class="line">                           <span class="keyword">if</span> task.allow_cancel <span class="keyword">and</span> task.cancel_func:</div><div class="line">                               task.cancel_func()</div><div class="line">                               _reschedule_task(task, exc=TaskTimeout(current_time))</div><div class="line">                           <span class="keyword">else</span>:</div><div class="line">                               <span class="comment"># Task is on the ready queue or can't be cancelled right now,</span></div><div class="line">                               <span class="comment"># mark it as pending cancellation</span></div><div class="line">                               task.cancel_pending = TaskTimeout(current_time)</div><div class="line"></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line">           <span class="comment"># Run ready tasks</span></div><div class="line">           <span class="comment"># ------------------------------------------------------------</span></div><div class="line"></div><div class="line">           <span class="keyword">for</span> _ <span class="keyword">in</span> range(len(ready)):</div><div class="line">               active = current = ready_popleft()</div><div class="line">               <span class="keyword">try</span>:</div><div class="line">                   <span class="keyword">for</span> a <span class="keyword">in</span> _activations:</div><div class="line">                       a.running(active)</div><div class="line">                   active.state = <span class="string">'RUNNING'</span></div><div class="line">                   active.cycles += <span class="number">1</span></div><div class="line"></div><div class="line">                   <span class="comment"># The current task runs traps until it suspends</span></div><div class="line">                   <span class="keyword">while</span> current:</div><div class="line">                       <span class="keyword">if</span> current.next_exc <span class="keyword">is</span> <span class="keyword">None</span>:</div><div class="line">                           trap = current._send(current.next_value)</div><div class="line">                           current.next_value = <span class="keyword">None</span></div><div class="line">                       <span class="keyword">else</span>:</div><div class="line">                           trap = current._throw(current.next_exc)</div><div class="line">                           current.next_exc = <span class="keyword">None</span></div><div class="line"></div><div class="line">                       <span class="comment"># Run the trap function. These never raise exceptions</span></div><div class="line">                       <span class="comment"># unless there's a fatal programming error in the kernel itself</span></div><div class="line">                       <span class="keyword">try</span>:</div><div class="line">                           traps[trap[<span class="number">0</span>]](*trap[<span class="number">1</span>:])</div><div class="line">                       <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</div><div class="line">                           current.next_exc = e</div><div class="line"></div><div class="line"></div><div class="line">               <span class="comment"># If any exception is raised during coroutine execution, the</span></div><div class="line">               <span class="comment"># task is terminated.   Set the final return code and break out</span></div><div class="line">               <span class="keyword">except</span> BaseException <span class="keyword">as</span> e:</div><div class="line">                   <span class="comment"># Wake all joining tasks and set the current task a terminated state</span></div><div class="line">                   <span class="keyword">for</span> wtask <span class="keyword">in</span> active.joining.pop(len(active.joining)):</div><div class="line">                       _reschedule_task(wtask)</div><div class="line">                   active.terminated = <span class="keyword">True</span></div><div class="line">                   active.state = <span class="string">'TERMINATED'</span></div><div class="line">                   <span class="keyword">del</span> tasks[active.id]</div><div class="line">                   active.timeout = <span class="keyword">None</span></div><div class="line"></div><div class="line">                   <span class="keyword">if</span> isinstance(e, StopIteration):</div><div class="line">                       active.next_value = e.value</div><div class="line">                       active.next_exc = <span class="keyword">None</span></div><div class="line">                   <span class="keyword">else</span>:</div><div class="line">                       active.next_value = <span class="keyword">None</span></div><div class="line">                       active.next_exc = e</div><div class="line">                       <span class="keyword">if</span> active.report_crash <span class="keyword">and</span> <span class="keyword">not</span> isinstance(e, (CancelledError, SystemExit)):</div><div class="line">                           log.error(<span class="string">'Task Crash: %r'</span>, active, exc_info=<span class="keyword">True</span>)</div><div class="line">                       <span class="keyword">if</span> <span class="keyword">not</span> isinstance(e, Exception):</div><div class="line">                           <span class="keyword">raise</span></div><div class="line"></div><div class="line">               <span class="keyword">finally</span>:</div><div class="line">                   <span class="comment"># Some tricky task/thread interactions require knowing when</span></div><div class="line">                   <span class="comment"># a coroutine has suspended. If suspend_func has been set, </span></div><div class="line">                   <span class="comment"># trigger it and clear.</span></div><div class="line">                   <span class="keyword">if</span> active.suspend_func:</div><div class="line">                       active.suspend_func()</div><div class="line">                       active.suspend_func = <span class="keyword">None</span></div><div class="line"></div><div class="line">                   <span class="comment"># Unregister any prior I/O listening</span></div><div class="line">                   <span class="keyword">if</span> active._last_io:</div><div class="line">                       _unregister_event(*active._last_io)</div><div class="line">                       active._last_io = <span class="keyword">None</span></div><div class="line"></div><div class="line">                   <span class="comment"># Trigger scheduler activations (if any)</span></div><div class="line">                   <span class="keyword">for</span> a <span class="keyword">in</span> _activations:</div><div class="line">                       a.suspended(active)</div><div class="line">                       <span class="keyword">if</span> active.terminated:</div><div class="line">                           a.terminated(active)</div><div class="line">                   current = active = <span class="keyword">None</span></div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/python-源码解析-异步编程/" rel="tag"># python 源码解析 异步编程</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/28/进程间通信之管道和消息队列/" rel="next" title="进程间通信之管道">
+                <i class="fa fa-chevron-left"></i> 进程间通信之管道
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/slark.jpeg"
+               alt="Edwin" />
+          <p class="site-author-name" itemprop="name">Edwin</p>
+           
+              <p class="site-description motion-element" itemprop="description">rua! rua! rua!</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Edwin</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

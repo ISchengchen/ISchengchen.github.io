@@ -74,7 +74,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="操作系统," />
 
 
 
@@ -90,16 +90,19 @@
 
 
 
-<meta name="description" content="最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。  python2的redis这个库取出来的str,不管存进去的是什么">
+<meta name="description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
+os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
 <meta property="og:type" content="article">
-<meta property="og:title" content="python字符编码那些坑">
-<meta property="og:url" content="http://slark.info/2018/04/11/python字符编码那些坑/index.html">
+<meta property="og:title" content="进程间通信之管道">
+<meta property="og:url" content="http://slark.info/2018/04/28/进程间通信之管道和消息队列/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。  python2的redis这个库取出来的str,不管存进去的是什么">
-<meta property="og:updated_time" content="2018-04-11T07:47:41.500Z">
+<meta property="og:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
+os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
+<meta property="og:updated_time" content="2018-04-30T03:31:29.709Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="python字符编码那些坑">
-<meta name="twitter:description" content="最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。  python2的redis这个库取出来的str,不管存进去的是什么">
+<meta name="twitter:title" content="进程间通信之管道">
+<meta name="twitter:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
+os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
 
 
 
@@ -127,13 +130,13 @@
 
 
 
-  <link rel="canonical" href="http://slark.info/2018/04/11/python字符编码那些坑/"/>
+  <link rel="canonical" href="http://slark.info/2018/04/28/进程间通信之管道和消息队列/"/>
 
 
 
 
 
-  <title>python字符编码那些坑 | Slark</title>
+  <title>进程间通信之管道 | Slark</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -263,7 +266,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/11/python字符编码那些坑/">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/28/进程间通信之管道和消息队列/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Edwin">
@@ -280,7 +283,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">python字符编码那些坑</h1>
+          <h1 class="post-title" itemprop="name headline">进程间通信之管道</h1>
         
 
         <div class="post-meta">
@@ -292,8 +295,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-11T15:17:52+08:00">
-                2018-04-11
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-28T15:45:48+08:00">
+                2018-04-28
               </time>
             
 
@@ -327,17 +330,18 @@
       
 
       
-        <p>  最近用python3写了个新系统，涉及到验证码验证的时候，出了个bug，一直显示验证码错误。逻辑很简单，把生成的验证码存在redis里，然后再取出来跟用户输入的验证码比较一下。那么基本上问题就出在redis.get(key)拿出来的东西发生了一点变化。<br>  python2的redis这个库取出来的str,不管存进去的是什么<br>  <a id="more"></a></p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">import</span> redis</div><div class="line">redis_client = redis.StrictRedis(<span class="string">'host='</span>localhost<span class="string">', port=6379, db=0'</span>)</div><div class="line">value1, value2 = <span class="number">1</span>, <span class="string">u'str'</span></div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div><div class="line">redis_client.set(<span class="string">'key1'</span>, value1, ex=<span class="number">60</span>)</div><div class="line">redis_client.set(<span class="string">'key2'</span>, value2, ex=<span class="number">60</span>)</div><div class="line">value1 = redis_client.get(<span class="string">'key1'</span>)</div><div class="line">value2 = redis_client.get(<span class="string">'key2'</span>)</div><div class="line"><span class="keyword">print</span> type(value1), type(value2)</div></pre></td></tr></table></figure>
-<p>结果</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;type &apos;int&apos;&gt; &lt;type &apos;unicode&apos;&gt;</div><div class="line">&lt;type &apos;str&apos;&gt; &lt;type &apos;str&apos;&gt;</div></pre></td></tr></table></figure>
-<p>对python3进行同样的操作(代码略作修改适应py3语法）结果是</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;class &apos;int&apos;&gt; &lt;class &apos;str&apos;&gt;</div><div class="line">&lt;class &apos;bytes&apos;&gt; &lt;class &apos;bytes&apos;&gt;</div></pre></td></tr></table></figure>
-<p>也就是说python3的redis库会取出的都是bytes,用str去跟bytes比较就会出现之前的bug。</p>
-<p>####py2的str与unicode<br>py2里字符串被分成了unicode和str两种类型。str是二进制字节序列，unicode则对应了一个unicode字符</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">字符：生活中的一个字母，汉字甚至标点等</div><div class="line">字节：计算机通过0和1的比特位存储数据，一个字节包含8个比特位</div></pre></td></tr></table></figure>
-<p>####py3的str和bytes<br>py3字符串分成str和bytes两种类型。str是unicode字符集中的所有字符，而bytes表示二进制字节数据。<br>另外py3把UTF-8作为默认系统编码（py2以ASCII作为默认编码方式），并且py3的str和bytes不能相加了，py2可以。</p>
-<p>####关于encode和decode<br>encode和decode经常搞混，来一句口诀好了。<br><em>字节到字符用decode,字符到字节用encode</em><br>对py2和py3都适用。</p>
+        <p>最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。</p>
+<h3 id="os-pipe-vs-multiprosessing-Pipe"><a href="#os-pipe-vs-multiprosessing-Pipe" class="headerlink" title="os.pipe vs multiprosessing.Pipe()"></a>os.pipe vs multiprosessing.Pipe()</h3><p>python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。<br>os.pipe是调用POSIX的pipe的python 接口，返回两个文件描述符，一个可以写，一个可以读，所以是半双工的，是一个非常底层的调用。<br>multiprosessing.Pipe()</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">Pipe</span><span class="params">(duplex=True)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Returns pair of connection objects at either end of a pipe</div><div class="line">    '''</div><div class="line">    <span class="keyword">if</span> duplex:</div><div class="line">        s1, s2 = socket.socketpair()</div><div class="line">        s1.setblocking(<span class="keyword">True</span>)</div><div class="line">        s2.setblocking(<span class="keyword">True</span>)</div><div class="line">        c1 = _multiprocessing.Connection(os.dup(s1.fileno()))</div><div class="line">        c2 = _multiprocessing.Connection(os.dup(s2.fileno()))</div><div class="line">        s1.close()</div><div class="line">        s2.close()</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        fd1, fd2 = os.pipe()</div><div class="line">        c1 = _multiprocessing.Connection(fd1, writable=<span class="keyword">False</span>)</div><div class="line">        c2 = _multiprocessing.Connection(fd2, readable=<span class="keyword">False</span>)</div><div class="line"></div><div class="line">    <span class="keyword">return</span> c1, c2</div></pre></td></tr></table></figure>
+<p>以上是在linux平台的实现，windows的接口有所不同（CreateNamedPipe,类似后面讲到的有名管道）。从代码可以看出，在duplex为False的时候，就是在os.pipe上做了一层封装，用得到的两个文件描述符实例化两个Connection对象，一个读，一个写，半双工。在duplex为True（默认值）的时候，调用了socketpair并且都设置为阻塞模式，来实现全双工，是更高一层的封装。<br>除了全双工与半双工，还有一个重要区别，os.pipe只能传bytes,而multiprocess.Pipe()进行封装后返回的是两个Connection对象（而不是一个文件描述符)，Connection使用pickle和unpickle进行序列化和反序列化,所以可以传递一切python对象。</p>
+<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>管道就是一个数据流，所有的unix都提供管道，由pipe函数创建，单个管道提供一个单向的数据流。管道在单个进程中，内核控制数据管道，用户通过一个写fd和读fd来进行数据传递。管道虽然是由单个进程创建的，但是通常在有亲缘关系的进程之间进行通信。</p>
+<p>#####单向数据流<br>下面就是一个典型的使用场景：<br>1.一个进程创建一个pipe。<br>2.该进程fork出一个子进程，自身成为父进程<br>3.父进程关闭管道的读端，子进程关闭管道的写端<br>4.形成了一个从父进程流向子进程的单向数据通道</p>
+<p>比如我们经常用到的shell中的管道，举个在log里面查找包含某关键词的log<br>tail -f app.log | grep ‘special_tag’<br>tail进程的输出通过管道成为grep进程的输入</p>
+<p>#####双向数据流<br>我们也可以使用使用两个管道在父子进程间创建一个双向数据流。<br>1.一个进程创建两个pipe<br>2.该进程fork出一个子进程，自身成为父进程<br>3.父进程关闭管道1写，管道2读<br>4.子进程关闭管道1读，管道2写<br>5.形成了一个双向的数据通道。</p>
+<p>通常要实现双向数据流，并不需要这么麻烦，使用socketpair（封装了两个半双工的管道）就可以获得全双工的管道，在python中的使用就如multiprocess.Pipe中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">s1, s2 = socket.socketpair()</div></pre></td></tr></table></figure>
+<p>s1和s2都可读可写</p>
+<p>###有名管道<br>管道只能在有亲缘关系的进程中间传递数据流，在没有亲缘关系的进程中，可以使用有通过一个路径名与之绑定（可能是得名原因。。。）的有名管道。</p>
 
       
     </div>
@@ -365,6 +369,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/操作系统/" rel="tag"># 操作系统</a>
+          
+        </div>
+      
 
       
         
@@ -374,8 +384,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/28/flask-logging使用/" rel="next" title="flask logging使用">
-                <i class="fa fa-chevron-left"></i> flask logging使用
+              <a href="/2018/04/11/python字符编码那些坑/" rel="next" title="python字符编码那些坑">
+                <i class="fa fa-chevron-left"></i> python字符编码那些坑
               </a>
             
           </div>
@@ -384,8 +394,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/04/28/进程间通信之管道和消息队列/" rel="prev" title="进程间通信之管道">
-                进程间通信之管道 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/05/08/curio源码解析/" rel="prev" title="curio源码解析">
+                curio源码解析 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -433,8 +443,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/slark.jpeg"
@@ -487,6 +506,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#os-pipe-vs-multiprosessing-Pipe"><span class="nav-number">1.</span> <span class="nav-text">os.pipe vs multiprosessing.Pipe()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管道"><span class="nav-number">2.</span> <span class="nav-text">管道</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
