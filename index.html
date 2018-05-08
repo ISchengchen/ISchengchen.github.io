@@ -380,7 +380,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/28/进程间通信之管道和消息队列/">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/28/进程间通信之管道/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Edwin">
@@ -399,7 +399,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/04/28/进程间通信之管道和消息队列/" itemprop="url">进程间通信之管道</a></h1>
+                <a class="post-title-link" href="/2018/04/28/进程间通信之管道/" itemprop="url">进程间通信之管道</a></h1>
         
 
         <div class="post-meta">
@@ -447,21 +447,14 @@
 
       
         
-          
-            <p>最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。</p>
-<h3 id="os-pipe-vs-multiprosessing-Pipe"><a href="#os-pipe-vs-multiprosessing-Pipe" class="headerlink" title="os.pipe vs multiprosessing.Pipe()"></a>os.pipe vs multiprosessing.Pipe()</h3><p>python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。<br>os.pipe是调用POSIX的pipe的python 接口，返回两个文件描述符，一个可以写，一个可以读，所以是半双工的，是一个非常底层的调用。<br>multiprosessing.Pipe()</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">Pipe</span><span class="params">(duplex=True)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Returns pair of connection objects at either end of a pipe</div><div class="line">    '''</div><div class="line">    <span class="keyword">if</span> duplex:</div><div class="line">        s1, s2 = socket.socketpair()</div><div class="line">        s1.setblocking(<span class="keyword">True</span>)</div><div class="line">        s2.setblocking(<span class="keyword">True</span>)</div><div class="line">        c1 = _multiprocessing.Connection(os.dup(s1.fileno()))</div><div class="line">        c2 = _multiprocessing.Connection(os.dup(s2.fileno()))</div><div class="line">        s1.close()</div><div class="line">        s2.close()</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        fd1, fd2 = os.pipe()</div><div class="line">        c1 = _multiprocessing.Connection(fd1, writable=<span class="keyword">False</span>)</div><div class="line">        c2 = _multiprocessing.Connection(fd2, readable=<span class="keyword">False</span>)</div><div class="line"></div><div class="line">    <span class="keyword">return</span> c1, c2</div></pre></td></tr></table></figure>
-<p>以上是在linux平台的实现，windows的接口有所不同（CreateNamedPipe,类似后面讲到的有名管道）。从代码可以看出，在duplex为False的时候，就是在os.pipe上做了一层封装，用得到的两个文件描述符实例化两个Connection对象，一个读，一个写，半双工。在duplex为True（默认值）的时候，调用了socketpair并且都设置为阻塞模式，来实现全双工，是更高一层的封装。<br>除了全双工与半双工，还有一个重要区别，os.pipe只能传bytes,而multiprocess.Pipe()进行封装后返回的是两个Connection对象（而不是一个文件描述符)，Connection使用pickle和unpickle进行序列化和反序列化,所以可以传递一切python对象。</p>
-<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>管道就是一个数据流，所有的unix都提供管道，由pipe函数创建，单个管道提供一个单向的数据流。管道在单个进程中，内核控制数据管道，用户通过一个写fd和读fd来进行数据传递。管道虽然是由单个进程创建的，但是通常在有亲缘关系的进程之间进行通信。</p>
-<p>#####单向数据流<br>下面就是一个典型的使用场景：<br>1.一个进程创建一个pipe。<br>2.该进程fork出一个子进程，自身成为父进程<br>3.父进程关闭管道的读端，子进程关闭管道的写端<br>4.形成了一个从父进程流向子进程的单向数据通道</p>
-<p>比如我们经常用到的shell中的管道，举个在log里面查找包含某关键词的log<br>tail -f app.log | grep ‘special_tag’<br>tail进程的输出通过管道成为grep进程的输入</p>
-<p>#####双向数据流<br>我们也可以使用使用两个管道在父子进程间创建一个双向数据流。<br>1.一个进程创建两个pipe<br>2.该进程fork出一个子进程，自身成为父进程<br>3.父进程关闭管道1写，管道2读<br>4.子进程关闭管道1读，管道2写<br>5.形成了一个双向的数据通道。</p>
-<p>通常要实现双向数据流，并不需要这么麻烦，使用socketpair（封装了两个半双工的管道）就可以获得全双工的管道，在python中的使用就如multiprocess.Pipe中</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">s1, s2 = socket.socketpair()</div></pre></td></tr></table></figure>
-<p>s1和s2都可读可写</p>
-<p>###有名管道<br>管道只能在有亲缘关系的进程中间传递数据流，在没有亲缘关系的进程中，可以使用有通过一个路径名与之绑定（可能是得名原因。。。）的有名管道。</p>
-
-          
+          <p>最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。<br>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2018/04/28/进程间通信之管道/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1251,7 +1244,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

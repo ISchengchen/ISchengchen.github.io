@@ -90,19 +90,16 @@
 
 
 
-<meta name="description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
-os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
+<meta name="description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="进程间通信之管道">
-<meta property="og:url" content="http://slark.info/2018/04/28/进程间通信之管道和消息队列/index.html">
+<meta property="og:url" content="http://slark.info/2018/04/28/进程间通信之管道/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
-os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
-<meta property="og:updated_time" content="2018-04-30T03:31:29.709Z">
+<meta property="og:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。">
+<meta property="og:updated_time" content="2018-05-08T09:59:47.978Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="进程间通信之管道">
-<meta name="twitter:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。
-os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。os.pipe是调用POSIX的pipe的python 接口，返回两个文件">
+<meta name="twitter:description" content="最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。">
 
 
 
@@ -130,7 +127,7 @@ os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，�
 
 
 
-  <link rel="canonical" href="http://slark.info/2018/04/28/进程间通信之管道和消息队列/"/>
+  <link rel="canonical" href="http://slark.info/2018/04/28/进程间通信之管道/"/>
 
 
 
@@ -266,7 +263,7 @@ os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，�
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/28/进程间通信之管道和消息队列/">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/04/28/进程间通信之管道/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Edwin">
@@ -330,7 +327,7 @@ os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，�
       
 
       
-        <p>最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。</p>
+        <p>最近看gunicorn的master-workers的进程管理源码，其中部分通信是通过管道的方式进行的，于是复习了一下《UNIX网络编程卷2：进程间通信》。<br><a id="more"></a></p>
 <h3 id="os-pipe-vs-multiprosessing-Pipe"><a href="#os-pipe-vs-multiprosessing-Pipe" class="headerlink" title="os.pipe vs multiprosessing.Pipe()"></a>os.pipe vs multiprosessing.Pipe()</h3><p>python常见的有两个地方会出现pipe，一个是os包里，一个是multiprocessing包里。<br>os.pipe是调用POSIX的pipe的python 接口，返回两个文件描述符，一个可以写，一个可以读，所以是半双工的，是一个非常底层的调用。<br>multiprosessing.Pipe()</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">Pipe</span><span class="params">(duplex=True)</span>:</span></div><div class="line">    <span class="string">'''</span></div><div class="line">    Returns pair of connection objects at either end of a pipe</div><div class="line">    '''</div><div class="line">    <span class="keyword">if</span> duplex:</div><div class="line">        s1, s2 = socket.socketpair()</div><div class="line">        s1.setblocking(<span class="keyword">True</span>)</div><div class="line">        s2.setblocking(<span class="keyword">True</span>)</div><div class="line">        c1 = _multiprocessing.Connection(os.dup(s1.fileno()))</div><div class="line">        c2 = _multiprocessing.Connection(os.dup(s2.fileno()))</div><div class="line">        s1.close()</div><div class="line">        s2.close()</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        fd1, fd2 = os.pipe()</div><div class="line">        c1 = _multiprocessing.Connection(fd1, writable=<span class="keyword">False</span>)</div><div class="line">        c2 = _multiprocessing.Connection(fd2, readable=<span class="keyword">False</span>)</div><div class="line"></div><div class="line">    <span class="keyword">return</span> c1, c2</div></pre></td></tr></table></figure>
 <p>以上是在linux平台的实现，windows的接口有所不同（CreateNamedPipe,类似后面讲到的有名管道）。从代码可以看出，在duplex为False的时候，就是在os.pipe上做了一层封装，用得到的两个文件描述符实例化两个Connection对象，一个读，一个写，半双工。在duplex为True（默认值）的时候，调用了socketpair并且都设置为阻塞模式，来实现全双工，是更高一层的封装。<br>除了全双工与半双工，还有一个重要区别，os.pipe只能传bytes,而multiprocess.Pipe()进行封装后返回的是两个Connection对象（而不是一个文件描述符)，Connection使用pickle和unpickle进行序列化和反序列化,所以可以传递一切python对象。</p>
@@ -481,7 +478,7 @@ os.pipe vs multiprosessing.Pipe()python常见的有两个地方会出现pipe，�
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
