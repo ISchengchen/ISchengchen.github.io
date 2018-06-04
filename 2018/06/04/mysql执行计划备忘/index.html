@@ -74,7 +74,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="mysql," />
 
 
 
@@ -90,16 +90,82 @@
 
 
 
-<meta name="description" content="rua! rua! rua!">
+<meta name="description" content="在分析sql执行情况的时候，我们常常会用到explain语句。因为内容比较琐碎，特在此记录一下。
+用法很简单，在sql语句之前加上explain就行了。
+###idsql执行顺序，从大到小执行
+###select_type
+
+
+
+名字
+含义
+
+
+
+
+SIMPLE
+简单查询，不使用union或者子查询
+
+
+PRIMARY
+复杂查询的最外层的select
+
+
+UNION
+UNION语句中的第二个及后面">
 <meta property="og:type" content="article">
-<meta property="og:title" content="分布式锁">
-<meta property="og:url" content="http://slark.info/2018/05/21/分布式锁/index.html">
+<meta property="og:title" content="mysql执行计划备忘">
+<meta property="og:url" content="http://slark.info/2018/06/04/mysql执行计划备忘/index.html">
 <meta property="og:site_name" content="Slark">
-<meta property="og:description" content="rua! rua! rua!">
-<meta property="og:updated_time" content="2018-05-21T06:57:12.383Z">
+<meta property="og:description" content="在分析sql执行情况的时候，我们常常会用到explain语句。因为内容比较琐碎，特在此记录一下。
+用法很简单，在sql语句之前加上explain就行了。
+###idsql执行顺序，从大到小执行
+###select_type
+
+
+
+名字
+含义
+
+
+
+
+SIMPLE
+简单查询，不使用union或者子查询
+
+
+PRIMARY
+复杂查询的最外层的select
+
+
+UNION
+UNION语句中的第二个及后面">
+<meta property="og:updated_time" content="2018-06-04T09:54:18.536Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="分布式锁">
-<meta name="twitter:description" content="rua! rua! rua!">
+<meta name="twitter:title" content="mysql执行计划备忘">
+<meta name="twitter:description" content="在分析sql执行情况的时候，我们常常会用到explain语句。因为内容比较琐碎，特在此记录一下。
+用法很简单，在sql语句之前加上explain就行了。
+###idsql执行顺序，从大到小执行
+###select_type
+
+
+
+名字
+含义
+
+
+
+
+SIMPLE
+简单查询，不使用union或者子查询
+
+
+PRIMARY
+复杂查询的最外层的select
+
+
+UNION
+UNION语句中的第二个及后面">
 
 
 
@@ -127,13 +193,13 @@
 
 
 
-  <link rel="canonical" href="http://slark.info/2018/05/21/分布式锁/"/>
+  <link rel="canonical" href="http://slark.info/2018/06/04/mysql执行计划备忘/"/>
 
 
 
 
 
-  <title>分布式锁 | Slark</title>
+  <title>mysql执行计划备忘 | Slark</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -263,7 +329,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/05/21/分布式锁/">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/06/04/mysql执行计划备忘/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Edwin">
@@ -280,7 +346,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">分布式锁</h1>
+          <h1 class="post-title" itemprop="name headline">mysql执行计划备忘</h1>
         
 
         <div class="post-meta">
@@ -292,8 +358,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-21T14:57:12+08:00">
-                2018-05-21
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-04T16:11:13+08:00">
+                2018-06-04
               </time>
             
 
@@ -327,7 +393,110 @@
       
 
       
-        
+        <p>在分析sql执行情况的时候，我们常常会用到explain语句。因为内容比较琐碎，特在此记录一下。</p>
+<h3 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h3><p>很简单，在sql语句之前加上explain就行了。</p>
+<p>###id<br>sql执行顺序，从大到小执行</p>
+<p>###select_type</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIMPLE</td>
+<td>简单查询，不使用union或者子查询</td>
+</tr>
+<tr>
+<td>PRIMARY</td>
+<td>复杂查询的最外层的select</td>
+</tr>
+<tr>
+<td>UNION</td>
+<td>UNION语句中的第二个及后面的select</td>
+</tr>
+<tr>
+<td>UNION RESULT</td>
+<td>UNION的结果</td>
+</tr>
+<tr>
+<td>SUBQUERY</td>
+<td>子查询中的第一个select</td>
+</tr>
+</tbody>
+</table>
+<p>###type<br>type表示数据访问/读取的操作类型，显示了连接使用了哪种类别,有无使用索引，它提供了判断查询是否高效的重要依据依据。</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>system</td>
+<td>const的一种特例，表里只有一条记录</td>
+</tr>
+<tr>
+<td>const</td>
+<td>where中把常量和主键或唯一索引进行比较时</td>
+</tr>
+<tr>
+<td>eq_ref</td>
+<td>此类型通常出现在多表的 join 查询, 表示对于前表的每一个结果, 都只能匹配到后表的一行结果。</td>
+</tr>
+<tr>
+<td>ref</td>
+<td>与eq_ref类似，不同的是ref不是唯一索引，此类型通常出现在多表的 join 查询, 针对于非唯一或非主键索引, 或者是使用了最左前缀规则索引的查询，可以用于使用=或&lt;=&gt;操作符的带索引的列</td>
+</tr>
+<tr>
+<td>index_merge</td>
+<td>该联接类型表示使用了索引合并优化方法， where中可能有多个条件(或者join)涉及到多个字段，它们之间进行 AND 或者 OR，那么此时就有可能会使用到 index merge 技术</td>
+</tr>
+<tr>
+<td>range</td>
+<td>表示使用索引范围查询, 通过索引字段范围获取表中部分数据记录， 这个类型通常出现在 =, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;=, IS NULL, &lt;=&gt;, BETWEEN, IN() 操作中</td>
+</tr>
+<tr>
+<td>index</td>
+<td>表示全索引扫描(full index scan), 和 ALL 类型类似, 只不过 ALL 类型是全表扫描, 而 index 类型则仅仅扫描所有的索引, 而不扫描数据</td>
+</tr>
+<tr>
+<td>ALL</td>
+<td>表示全表扫描, 这个类型的查询是性能最差的查询之一，一般不会出现</td>
+</tr>
+</tbody>
+</table>
+<h3 id="extra"><a href="#extra" class="headerlink" title="extra"></a>extra</h3><table>
+<thead>
+<tr>
+<th>名字</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Using where</td>
+<td>在查找使用索引的情况下，需要回表去查询所需的数据</td>
+</tr>
+<tr>
+<td>Using index</td>
+<td>表示查询在索引树中就可查找所需数据, 不用扫描表数据文件, 说明性能不错</td>
+</tr>
+<tr>
+<td>Using filesort</td>
+<td>当SQL中包含ORDER BY 操作，而且无法利用索引完成排序操作的时候，查询优化器不得不选择相应的排序算法来实现</td>
+</tr>
+<tr>
+<td>Using temporary</td>
+<td>查询有使用临时表, 一般出现于排序, 分组和多表join的情况, 查询效率不高, 建议优化</td>
+</tr>
+</tbody>
+</table>
+
       
     </div>
 
@@ -354,6 +523,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/mysql/" rel="tag"># mysql</a>
+          
+        </div>
+      
 
       
         
@@ -363,8 +538,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/05/15/设计数据密集型应用读书笔记之复制-replica/" rel="next" title="设计数据密集型应用读书笔记之分区(partition)">
-                <i class="fa fa-chevron-left"></i> 设计数据密集型应用读书笔记之分区(partition)
+              <a href="/2018/05/21/分布式锁/" rel="next" title="分布式锁">
+                <i class="fa fa-chevron-left"></i> 分布式锁
               </a>
             
           </div>
@@ -372,10 +547,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/06/04/mysql执行计划备忘/" rel="prev" title="mysql执行计划备忘">
-                mysql执行计划备忘 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -422,8 +593,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/slark.jpeg"
@@ -476,6 +656,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#用法"><span class="nav-number">1.</span> <span class="nav-text">用法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#extra"><span class="nav-number">2.</span> <span class="nav-text">extra</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
