@@ -264,6 +264,121 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2018/06/04/TCP-keepalive与http-keepalive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Edwin">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/slark.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Slark">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/06/04/TCP-keepalive与http-keepalive/" itemprop="url">TCP keepalive与http keepalive</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-06-04T18:33:31+08:00">
+                2018-06-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>计算机里有很多术语听着一样，然而实际内容（比如一致性，到处都是一致性，然而表达的是完全不同的意思）差别很大，本文聊一下HTTP的keep-alive 和TCP的keep-alive，也许有同学要说了。。。啊！原来这两个不是一个东西？</p>
+<p>###TCP keep-alive<br>先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没有响应，并且重试多次以后可以认为链接丢失。<br>linux内核中有三个参数影响keep-alive行为。<br>1.net.ipv4.tcpkeepaliveintvl = 75<br>表示两次重试之间的时间间隔<br>2.net.ipv4.tcpkeepaliveprobes = 9<br>表示重试次数<br>3.net.ipv4.tcpkeepalivetime = 7200<br>表示空闲多少时间以后开始发送心跳包</p>
+<p>对应TCP socket中<br>TCPKEEPCNT: 覆盖 tcpkeepaliveprobes<br>TCPKEEPIDLE: 覆盖 tcpkeepalivetime<br>TCPKEEPINTVL: 覆盖 tcpkeepalive_intvl<br>TCP socket中默认不打开keepalive,需要设置SO_KEEPALIVE选项</p>
+<h3 id="HTTP-keep-alive"><a href="#HTTP-keep-alive" class="headerlink" title="HTTP keep-alive"></a>HTTP keep-alive</h3><p>http的keep-alive的目的是延长TCP连接的存活时间,从而在一个TCP连接上发送多个HTTP请求。正常情况下，我一个http请求完成我就断开TCP连接，但是在设置keep-alive以后（http1.1默认开启），就会继续保持这个连接keepalive_timeout时间。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://slark.info/2018/06/04/mysql执行计划备忘/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1400,122 +1515,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://slark.info/2017/08/04/python-coroutine详解(上)/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Edwin">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/slark.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Slark">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/08/04/python-coroutine详解(上)/" itemprop="url">python coroutine详解(上)</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-04T18:43:10+08:00">
-                2017-08-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲coroutine。<br>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2017/08/04/python-coroutine详解(上)/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1565,7 +1564,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">12</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
