@@ -91,18 +91,18 @@
 
 
 <meta name="description" content="计算机里有很多术语听着一样，然而实际内容（比如一致性，到处都是一致性，然而表达的是完全不同的意思）差别很大，本文聊一下HTTP的keep-alive 和TCP的keep-alive，也许有同学要说了。。。啊！原来这两个不是一个东西？
-###TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果">
+TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没">
 <meta property="og:type" content="article">
 <meta property="og:title" content="TCP keepalive与http keepalive">
 <meta property="og:url" content="http://slark.info/2018/06/04/TCP-keepalive与http-keepalive/index.html">
 <meta property="og:site_name" content="Slark">
 <meta property="og:description" content="计算机里有很多术语听着一样，然而实际内容（比如一致性，到处都是一致性，然而表达的是完全不同的意思）差别很大，本文聊一下HTTP的keep-alive 和TCP的keep-alive，也许有同学要说了。。。啊！原来这两个不是一个东西？
-###TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果">
-<meta property="og:updated_time" content="2018-06-06T08:04:38.445Z">
+TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没">
+<meta property="og:updated_time" content="2018-06-06T08:06:37.748Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="TCP keepalive与http keepalive">
 <meta name="twitter:description" content="计算机里有很多术语听着一样，然而实际内容（比如一致性，到处都是一致性，然而表达的是完全不同的意思）差别很大，本文聊一下HTTP的keep-alive 和TCP的keep-alive，也许有同学要说了。。。啊！原来这两个不是一个东西？
-###TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果">
+TCP keep-alive先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没">
 
 
 
@@ -331,7 +331,7 @@
 
       
         <p>计算机里有很多术语听着一样，然而实际内容（比如一致性，到处都是一致性，然而表达的是完全不同的意思）差别很大，本文聊一下HTTP的keep-alive 和TCP的keep-alive，也许有同学要说了。。。啊！原来这两个不是一个东西？</p>
-<p>###TCP keep-alive<br>先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没有响应，并且重试多次以后可以认为链接丢失。<br>linux内核中有三个参数影响keep-alive行为。<br>1.net.ipv4.tcpkeepaliveintvl = 75<br>表示两次重试之间的时间间隔<br>2.net.ipv4.tcpkeepaliveprobes = 9<br>表示重试次数<br>3.net.ipv4.tcpkeepalivetime = 7200<br>表示空闲多少时间以后开始发送心跳包</p>
+<h3 id="TCP-keep-alive"><a href="#TCP-keep-alive" class="headerlink" title="TCP keep-alive"></a>TCP keep-alive</h3><p>先来看TCP的keep-alive，其实相当于一个心跳机制，在一个TCP链接长时间没有数据发送时，会自动发一个空数据报文发过去，如果对方没有响应，并且重试多次以后可以认为链接丢失。<br>linux内核中有三个参数影响keep-alive行为。<br>1.net.ipv4.tcpkeepaliveintvl = 75<br>表示两次重试之间的时间间隔<br>2.net.ipv4.tcpkeepaliveprobes = 9<br>表示重试次数<br>3.net.ipv4.tcpkeepalivetime = 7200<br>表示空闲多少时间以后开始发送心跳包</p>
 <p>对应TCP socket中<br>TCPKEEPCNT: 覆盖 tcpkeepaliveprobes<br>TCPKEEPIDLE: 覆盖 tcpkeepalivetime<br>TCPKEEPINTVL: 覆盖 tcpkeepalive_intvl<br>TCP socket中默认不打开keepalive,需要设置SO_KEEPALIVE选项</p>
 <h3 id="HTTP-keep-alive"><a href="#HTTP-keep-alive" class="headerlink" title="HTTP keep-alive"></a>HTTP keep-alive</h3><p>http的keep-alive的目的是延长TCP连接的存活时间,从而在一个TCP连接上发送多个HTTP请求。正常情况下，我一个http请求完成我就断开TCP连接，但是在设置keep-alive以后（http1.1默认开启），就会继续保持这个连接keepalive_timeout时间。</p>
 
@@ -498,7 +498,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP-keep-alive"><span class="nav-number">1.</span> <span class="nav-text">HTTP keep-alive</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP-keep-alive"><span class="nav-number">1.</span> <span class="nav-text">TCP keep-alive</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP-keep-alive"><span class="nav-number">2.</span> <span class="nav-text">HTTP keep-alive</span></a></li></ol></div>
             
 
           </div>
