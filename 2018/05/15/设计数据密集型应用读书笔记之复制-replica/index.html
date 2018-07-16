@@ -94,15 +94,15 @@
 
 复制的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="设计数据密集型应用读书笔记之分区(partition)">
+<meta property="og:title" content="设计数据密集型应用读书笔记之复制(replica)">
 <meta property="og:url" content="http://slark.info/2018/05/15/设计数据密集型应用读书笔记之复制-replica/index.html">
 <meta property="og:site_name" content="Slark">
 <meta property="og:description" content="CAP理论：一致性(Consistency)、可用性（Availability）分区容错性（Partition tolerance）只能三选二。这个说法容易产生一些误解，更科学的是在P也就是网络发生分区的时候，A和C二选一。http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed
 
 复制的">
-<meta property="og:updated_time" content="2018-05-22T10:02:10.658Z">
+<meta property="og:updated_time" content="2018-07-16T06:58:24.232Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="设计数据密集型应用读书笔记之分区(partition)">
+<meta name="twitter:title" content="设计数据密集型应用读书笔记之复制(replica)">
 <meta name="twitter:description" content="CAP理论：一致性(Consistency)、可用性（Availability）分区容错性（Partition tolerance）只能三选二。这个说法容易产生一些误解，更科学的是在P也就是网络发生分区的时候，A和C二选一。http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed
 
 复制的">
@@ -139,7 +139,7 @@
 
 
 
-  <title>设计数据密集型应用读书笔记之分区(partition) | Slark</title>
+  <title>设计数据密集型应用读书笔记之复制(replica) | Slark</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -286,7 +286,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">设计数据密集型应用读书笔记之分区(partition)</h1>
+          <h1 class="post-title" itemprop="name headline">设计数据密集型应用读书笔记之复制(replica)</h1>
         
 
         <div class="post-meta">
@@ -336,7 +336,7 @@
         <ol>
 <li><p>CAP理论：一致性(Consistency)、可用性（Availability）分区容错性（Partition tolerance）只能三选二。这个说法容易产生一些误解，更科学的是在P也就是网络发生分区的时候，A和C二选一。<a href="http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed" target="_blank" rel="external">http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed</a></p>
 </li>
-<li><p>复制的几种模型：<br>单主模式，多主模式和无主模式<br>一般来说，单主模式实现上最简单，也很容易理解，write都到主节点，read到任何一个从节点，多主模式的话，主节点之间互相通信交换数据，write到任一个主节点，read到任一从节点。无主的话复杂度比较高，一般采用Quorum机制（表决），读写都是多个节点，举个例子，5个node,那么一般设置至少读三个节点，写三个节点，那么根据抽屉原理，至少能够读到一个节点的数据是最新的。<br>单主和多主（）</p>
+<li><p>复制的几种模型：<br>单主模式，多主模式和无主模式<br>一般来说，单主模式实现上最简单，也很容易理解，write都到主节点，read到任何一个从节点，多主模式的话，主节点之间互相通信交换数据，write到任一个主节点，read到任一从节点。无主的话复杂度比较高，一般采用Quorum机制（表决），读写都是多个节点，举个例子，5个node,那么一般设置至少读三个节点，写三个节点，那么根据抽屉原理，至少能够读到一个节点的数据是最新的。</p>
 </li>
 <li><p>复制的同步和异步<br>同步复制，一个写操作需要再所有需要复制的节点都response以后才能认为是操作成功了，而异步操作在主节点写成功以后就返回，然后再复制给从节点，显然后者效率高，但是一致性就无法保证，整个分布式系统理论就是容错和妥协。这种一点的办法，可以使用半同步，比如等复制给一个从节点以后返回，也就是系统中至少两个节点有最新数据，避免主节点挂掉以后，没有副本可以恢复。</p>
 </li>

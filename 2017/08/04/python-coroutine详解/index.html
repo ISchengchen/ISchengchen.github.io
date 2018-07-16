@@ -1,0 +1,710 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="fluent-python 读书笔记," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/slark.jpeg?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲corouti">
+<meta property="og:type" content="article">
+<meta property="og:title" content="python coroutine详解(上)">
+<meta property="og:url" content="http://slark.info/2017/08/04/python-coroutine详解/index.html">
+<meta property="og:site_name" content="Slark">
+<meta property="og:description" content="​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲corouti">
+<meta property="og:updated_time" content="2018-07-16T06:53:29.758Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="python coroutine详解(上)">
+<meta name="twitter:description" content="​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲corouti">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://slark.info/2017/08/04/python-coroutine详解/"/>
+
+
+
+
+
+  <title>python coroutine详解(上) | Slark</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Slark</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">coding and thinking</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://slark.info/2017/08/04/python-coroutine详解/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Edwin">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/slark.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Slark">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">python coroutine详解(上)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-04T18:43:10+08:00">
+                2017-08-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>​     coroutine也就是所谓的协程，很多文章都对协程序的概念做了介绍，所以就不贴那些概念的东西，我的理解里，协程说到底是一个控制流，操作系统负责了进程和线程级别的调度，而协程则是让程序员可以在代码层面切分和调度代码流程。为了讲清楚coroutine，本文主要记录iterables(可迭代对象)，iterator(迭代器)和generator(生成器)的一些知识点，下篇再讲coroutine。<br><a id="more"></a></p>
+<h2 id="iterables-和-iterators"><a href="#iterables-和-iterators" class="headerlink" title="iterables 和 iterators"></a>iterables 和 iterators</h2><p> iterable是可迭代对象，</p>
+<p> 1、实现<code>__getitem__</code>（为了向后兼容，可能在将来被移除）,python会自动生成一个迭代器，并且从index=0开始获取item。</p>
+<p> 2、实现<code>__iter__</code>方法，并且该方法返回一个iterator(迭代器)。</p>
+<p>1和2是或的关系，但是标准协议中需要实现2,1的特殊处理是为了向后兼容。</p>
+<p><strong>tips</strong>:</p>
+<p>检查一个对象是不是iterable,可以使用iter()方法,这个方法考虑了向后兼容，既检查了<code>__getitem__</code>又检查了<code>__iter__</code>。</p>
+<p> 所有的python senquence都是可迭代对象，因为他们都是实现了<code>__getitem__</code>方法.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> re</div><div class="line"></div><div class="line">RE_WORD = re.compile(<span class="string">'\w+'</span>)</div><div class="line"></div><div class="line"><span class="comment"># 实现一个可迭代的senquence,但不是标准的iterable协议，</span></div><div class="line"><span class="comment"># 而是iter()对于__getitem__的特殊处理</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Sentence</span><span class="params">()</span>:</span></div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, text)</span>:</span></div><div class="line">        self.text = text</div><div class="line">        self.words = RE_WORD.findall(text)</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span><span class="params">(self, index)</span>:</span></div><div class="line">        <span class="keyword">return</span> self.words[index]</div><div class="line"></div><div class="line">sentence = Sentence(<span class="string">'I love you'</span>)</div><div class="line"><span class="keyword">for</span> w <span class="keyword">in</span> sentence:</div><div class="line">    print(w)</div></pre></td></tr></table></figure>
+<p>iterator是迭代器，下面给出一个迭代器的标准定义：</p>
+<p>一个对象如果实现了一个<code>__next__</code>无参数方法（除了self）,并且该方法返回在一个序列中的下一个成员或者是在没有下一个成员的时候抛出StopIteration,那么可以称为一个迭代器。</p>
+<p>在实际实现中，通过<code>__next__</code>和<code>__iter__</code>来实现一个生成器</p>
+<p>1.实现<code>__next__</code>方法（在python2中是实现next方法），返回下一个item,当没有更多item的时候抛出StopIteration异常。</p>
+<p>2.实现<code>__iter__</code>方法，返回对象本身(self)。</p>
+<p>1和2是与关系</p>
+<p>有此可见，所有的iterator都是iterable，因为iterator实现了<code>__iter__</code>方法。</p>
+<p>在之前可迭代对象的定义中可以看到需要返回一个迭代器，那么现在迭代器也引出以后，我们实现一个符合标准协议的iterable</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> re</div><div class="line">RE_WORD = re.compile(<span class="string">'\w+'</span>)</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Sentence</span>:</span></div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, text)</span>:</span></div><div class="line">         self.text = text</div><div class="line">         self.words = RE_WORD.findall(text)</div><div class="line">        </div><div class="line">    <span class="comment"># 返回一个iterator    </span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__iter__</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">return</span> SentenceIterator(self.words)</div><div class="line">    </div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SentenceIterator</span>:</span></div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, words)</span>:</span></div><div class="line">        self.words = words</div><div class="line">        self.index = <span class="number">0</span></div><div class="line">    </div><div class="line">    <span class="comment"># 返回下一个值</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__next__</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">try</span>:</div><div class="line">            word = self.words[self.index]</div><div class="line">        <span class="keyword">except</span> IndexError:</div><div class="line">            <span class="keyword">raise</span> StopIteration()</div><div class="line">        self.index += <span class="number">1</span></div><div class="line">        <span class="keyword">return</span> word</div><div class="line">    </div><div class="line">    <span class="comment"># 返回自己</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__iter__</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">return</span> self</div><div class="line">            </div><div class="line">s = Sentence(<span class="string">'I love you'</span>)</div><div class="line"><span class="keyword">for</span> w <span class="keyword">in</span> s:</div><div class="line">    print(w)</div></pre></td></tr></table></figure>
+<p>读到这里可能有点混乱，之前我也不太理解为什么要有这两个东西，为什么不在iterable里面直接实现<code>__next__</code>。</p>
+<p>现在我的理解是:iterable和iterator的主要区别在于返回的东西，iterable返回一个迭代器，我们对于一个集合经常要做的事情是取出集合的每个成员，那么这个事情就是iterator去做的，把这件交给两个类去做，是为了支持多种遍历方式，也就是一个iterable可以只是更换iterator就实现了换一种方法遍历集合的目的。</p>
+<h2 id="generator"><a href="#generator" class="headerlink" title="generator"></a>generator</h2><p><strong>生成器函数定义</strong>：一个有yield关键字的函数就是生成器函数。</p>
+<p>生成器函数在被调用的时候会返回一个生成器对象，所以生成器函数可以认为是一个工厂函数，生产生成器对象。</p>
+<p><strong>yield</strong>关键字我觉得可以先从字典里来解释，’to produce or to give way’，这两个意思很好的解释了yield的作用，看个简单的例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_love</span><span class="params">()</span>:</span></div><div class="line">    print(<span class="string">'我拿到了执行权'</span>)</div><div class="line">    <span class="keyword">yield</span> <span class="string">'我交出执行权，并抛给你这段话'</span></div><div class="line">gen = gen_love()</div><div class="line">next(gen)</div></pre></td></tr></table></figure>
+<p>yiled的详细解释<a href="https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do" target="_blank" rel="external">https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do</a></p>
+<p>generator也是一种iterator,所以之前的类可以写成下面这种yield的版本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> re</div><div class="line">RE_WORD = re.copile(<span class="string">'\w+'</span>)</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Sentence</span>:</span></div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, text)</span>:</span></div><div class="line">        self.text = text</div><div class="line">        self.words = RE_WORD.findall(text)</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__iter__</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">for</span> w <span class="keyword">in</span> self.words:</div><div class="line">            <span class="keyword">yield</span> word</div></pre></td></tr></table></figure>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>《fluent python》</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/fluent-python-读书笔记/" rel="tag"># fluent-python 读书笔记</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/18/golang-defer详解/" rel="next" title="golang defer关键字">
+                <i class="fa fa-chevron-left"></i> golang defer关键字
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/07/从apscheduler谈到延时任务处理-一/" rel="prev" title="从apscheduler谈到延时任务处理">
+                从apscheduler谈到延时任务处理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/slark.jpeg"
+               alt="Edwin" />
+          <p class="site-author-name" itemprop="name">Edwin</p>
+           
+              <p class="site-description motion-element" itemprop="description">rua! rua! rua!</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#iterables-和-iterators"><span class="nav-number">1.</span> <span class="nav-text">iterables 和 iterators</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#generator"><span class="nav-number">2.</span> <span class="nav-text">generator</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Edwin</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -572,7 +572,24 @@
       
         
           
-            
+            <p>一.选举过程</p>
+<p>when:<br>如果一个follower节点在一段时间（election timeout）内没有收到leader的心跳AppendEntries RPC(这个rpc里面不带有log),那么它就会发起选举<br>how:<br>follower节点先increase自己的term,然后把自己标记为candidate,投票自己，然后向所有节点发出一个RequestVote的rpc</p>
+<p>三种结果：</p>
+<ol>
+<li>获得大多数人的vote， 赢得选举，然后向所有节点发送心跳，确认自己的leader地位。</li>
+<li>收到某个节点发来的心跳（表明该节点宣布成为leader），比较心跳的term，如果大于等于自己的term，那么承认选举结果，否则保持candidate状态。</li>
+<li>在一个term内， 没有节点获取多数票 ，选举流产，increase自己的term，发起下一轮的选举，需要额外措施保证这种情况不会无限循环。</li>
+</ol>
+<p>二.日志复制<br>leader会维持每个follower的 nextIndex来表明leader需要向follower发送的下一个log entry的index。<br>在一个节点刚选举为leader的时候，所有的nextIndex被初始化为自己的最后一条log entry。 在leader发送AppendEntries RPC的时候，<br>如果follower的log一致性检查不通过，说明leader需要减小对该follower的nextIndex（每次减1）,多次这个过程后，会找到合适的nextIndex,并且保持leader和<br>follower的一致性。<br>很明显，这样的做法可能会导致rpc次数过多，所以有个优化手段：每次减小的是整个term的entry数目，而不是一次rpc减小一个entry。</p>
+<p>三.安全性</p>
+<p>在日志复制中，完全是根据leader的日志进行复制的，回覆盖follower，那么我们需要一个机制保证leader的日志是完整的（包含了之前所有term的日志<br>也就是 <code>Leader Completeness Property</code></p>
+<ol>
+<li><p>选举过程的限制<br>在所有的leader_based的一致性算法中，leader最终肯定是要拥有全量committed日志的。可以在选举的时候标记leader的缺失日志，然后再选举过程中或者选举结束后<br>将日志传到leader，但是raft将拥有全量日志作为可以被选举为leader先决条件，也就是在选举的RequestVote Rpc 中带上candidate的日志信息，然后<br>投票者会否决掉日志落后于自己的candidate。<br>比较的过程根据term和index,优先比较term,然后比较index</p>
+</li>
+<li><p>Committing entries from previous terms（指不提交之前term的log entry）</p>
+</li>
+</ol>
+
           
         
       
@@ -1202,7 +1219,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/05/15/设计数据密集型应用读书笔记之复制-replica/" itemprop="url">设计数据密集型应用读书笔记之分区(partition)</a></h1>
+                <a class="post-title-link" href="/2018/05/15/设计数据密集型应用读书笔记之复制-replica/" itemprop="url">设计数据密集型应用读书笔记之复制(replica)</a></h1>
         
 
         <div class="post-meta">
@@ -1254,7 +1271,7 @@
             <ol>
 <li><p>CAP理论：一致性(Consistency)、可用性（Availability）分区容错性（Partition tolerance）只能三选二。这个说法容易产生一些误解，更科学的是在P也就是网络发生分区的时候，A和C二选一。<a href="http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed" target="_blank" rel="external">http://www.infoq.com/cn/articles/cap-twelve-years-later-how-the-rules-have-changed</a></p>
 </li>
-<li><p>复制的几种模型：<br>单主模式，多主模式和无主模式<br>一般来说，单主模式实现上最简单，也很容易理解，write都到主节点，read到任何一个从节点，多主模式的话，主节点之间互相通信交换数据，write到任一个主节点，read到任一从节点。无主的话复杂度比较高，一般采用Quorum机制（表决），读写都是多个节点，举个例子，5个node,那么一般设置至少读三个节点，写三个节点，那么根据抽屉原理，至少能够读到一个节点的数据是最新的。<br>单主和多主（）</p>
+<li><p>复制的几种模型：<br>单主模式，多主模式和无主模式<br>一般来说，单主模式实现上最简单，也很容易理解，write都到主节点，read到任何一个从节点，多主模式的话，主节点之间互相通信交换数据，write到任一个主节点，read到任一从节点。无主的话复杂度比较高，一般采用Quorum机制（表决），读写都是多个节点，举个例子，5个node,那么一般设置至少读三个节点，写三个节点，那么根据抽屉原理，至少能够读到一个节点的数据是最新的。</p>
 </li>
 <li><p>复制的同步和异步<br>同步复制，一个写操作需要再所有需要复制的节点都response以后才能认为是操作成功了，而异步操作在主节点写成功以后就返回，然后再复制给从节点，显然后者效率高，但是一致性就无法保证，整个分布式系统理论就是容错和妥协。这种一点的办法，可以使用半同步，比如等复制给一个从节点以后返回，也就是系统中至少两个节点有最新数据，避免主节点挂掉以后，没有副本可以恢复。</p>
 </li>
